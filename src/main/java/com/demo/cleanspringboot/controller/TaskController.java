@@ -1,7 +1,7 @@
 package com.demo.cleanspringboot.controller;
 
-import com.demo.cleanspringboot.dto.TaskRequest;
-import com.demo.cleanspringboot.dto.TaskResponse;
+import com.demo.cleanspringboot.dto.task.TaskRequest;
+import com.demo.cleanspringboot.dto.task.TaskResponse;
 import com.demo.cleanspringboot.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,3 +39,10 @@ public class TaskController {
         return new ResponseEntity<>(taskService.getAllTasks(), HttpStatus.OK);
     }
 }
+
+//controller
+//validate request body (DTO (Request Body))
+//transform Entity (Database) -> DTO (Response Body)
+
+//service
+//transform DTO (request body) -> Entity

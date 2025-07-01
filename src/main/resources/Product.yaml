@@ -1,0 +1,260 @@
+openapi: 3.1.0
+info:
+  title: Product Service API
+  version: 1.0.0
+  description: For more details,
+    - see the project README.
+
+paths:
+  /products:
+    get:
+      summary: Get all products
+      operationId: getAllProducts
+      tags:
+        - Product
+      responses:
+        '200':
+          description: A list of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      summary: Create a new product
+      operationId: createProduct
+      tags:
+        - Product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /products/{id}:
+    get:
+      summary: Get product by ID
+      operationId: getProductById
+      tags:
+        - Product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID of the product
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update a product
+      operationId: updateProduct
+      tags:
+        - Product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID of the product to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete a product
+      operationId: deleteProduct
+      tags:
+        - Product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID of the product to delete
+      responses:
+        '204':
+          description: Product deleted successfully
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    Product:
+      type: object
+      required:
+        - id
+        - imageUrl
+        - category
+        - name
+        - price
+        - rating
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the product
+          example: prod-123
+        imageUrl:
+          type: string
+          format: uri
+          description: URL of the product image
+          example: https://example.com/images/product-123.jpg
+        category:
+          type: string
+          description: Category of the product
+          example: Electronics
+        name:
+          type: string
+          description: Name of the product
+          example: Wireless Headphones
+        price:
+          type: number
+          format: float
+          description: Price of the product
+          example: 99.99
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+          description: Rating of the product (0 to 5)
+          example: 4.5
+        description:
+          type: string
+          description: Detailed description of the product
+          example: High-quality wireless headphones with noise cancellation.
+
+    CreateProductRequest:
+      type: object
+      required:
+        - imageUrl
+        - category
+        - name
+        - price
+        - rating
+      properties:
+        imageUrl:
+          type: string
+          format: uri
+          description: URL of the product image
+          example: https://example.com/images/new-product.jpg
+        category:
+          type: string
+          description: Category of the product
+          example: Books
+        name:
+          type: string
+          description: Name of the product
+          example: The Great Novel
+        price:
+          type: number
+          format: float
+          description: Price of the product
+          example: 19.99
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+          description: Rating of the product (0 to 5)
+          example: 0
+        description:
+          type: string
+          description: Detailed description of the product
+          example: A compelling story that will keep you on the edge of your seat.
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        imageUrl:
+          type: string
+          format: uri
+          description: URL of the product image
+          example: https://example.com/images/updated-product.jpg
+        category:
+          type: string
+          description: Category of the product
+          example: Software
+        name:
+          type: string
+          description: Name of the product
+          example: Advanced Photo Editor
+        price:
+          type: number
+          format: float
+          description: Price of the product
+          example: 249.00
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+          description: Rating of the product (0 to 5)
+          example: 4.8
+        description:
+          type: string
+          description: Updated detailed description of the product
+          example: Powerful editing tools for professional photographers.
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: product_not_found
+        message:
+          type: string
+          example: Product with the given ID was not found.

@@ -1,7 +1,7 @@
 package com.demo.cleanspringboot.controller;
 
-import com.demo.cleanspringboot.dto.TaskRequest;
-import com.demo.cleanspringboot.dto.TaskResponse;
+import com.demo.cleanspringboot.dto.task.TaskRequest;
+import com.demo.cleanspringboot.dto.task.TaskResponse;
 import com.demo.cleanspringboot.service.TaskService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TaskController.class)
-public class TaskControllerTest {
+public class TaskEntityControllerTest {
     @Autowired
     private MockMvc mockMvc;
 

@@ -24,6 +24,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("com.h2database:h2:2.3.232")
     implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+    implementation("com.microsoft.sqlserver:mssql-jdbc")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

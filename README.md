@@ -12,7 +12,7 @@
 ### Package Structure
 ## Project Structure & Naming Conventions
 * `@file:src/main/java/*/controller/TaskController.java` -- controller
-* `@file:src/main/java/*/model/Task.java` -- entity
+* `@file:src/main/java/*/model/TaskEntity.java` -- entity
 * `@file:src/main/java/*/dto/TaskRequest.java` -- request
 * `@file:src/main/java/*/dto/TaskResponse.java` -- response
 * `@file:src/main/java/*/service/TaskServiceImpl.java` -- service interface
@@ -24,7 +24,7 @@
 
 ### File Naming Pattern
 * **controller**: `{Entity}Controller.java` (e.g., `WarehouseController.java`)
-* **model**: `{Entity}.java` (e.g., `Warehouse.java`)
+* **model**: `{Entity}Entity.java` (e.g., `WarehouseEntity.java`)
 * **dto**:
     - Requests: `{Operation}{Entity}Request.java` (e.g., `CreateWarehouseRequest.java`)
     - Responses: `{Entity}Response.java` (e.g., `WarehouseResponse.java`)

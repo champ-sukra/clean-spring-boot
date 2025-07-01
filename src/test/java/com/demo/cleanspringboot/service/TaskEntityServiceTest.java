@@ -1,8 +1,8 @@
 package com.demo.cleanspringboot.service;
 
-import com.demo.cleanspringboot.dto.TaskRequest;
-import com.demo.cleanspringboot.dto.TaskResponse;
-import com.demo.cleanspringboot.model.Task;
+import com.demo.cleanspringboot.dto.task.TaskRequest;
+import com.demo.cleanspringboot.dto.task.TaskResponse;
+import com.demo.cleanspringboot.model.TaskEntity;
 import com.demo.cleanspringboot.repository.TaskRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +16,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class TaskServiceTest {
+public class TaskEntityServiceTest {
     @Mock
     TaskRepository taskRepository;
 
@@ -27,10 +27,10 @@ public class TaskServiceTest {
     void createTask_shouldReturnTaskResponse() {
         //given
         TaskRequest taskRequest = new TaskRequest("title", "desc");
-        Task task = new Task(1L, "title", "desc");
+        TaskEntity taskEntity = new TaskEntity(1L, "title", "desc");
 
         //when
-        when(taskRepository.save(any())).thenReturn(task);
+        when(taskRepository.save(any())).thenReturn(taskEntity);
 
         //then
         TaskResponse taskResponse = taskService.createTask(taskRequest);

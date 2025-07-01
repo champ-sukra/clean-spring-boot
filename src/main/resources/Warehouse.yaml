@@ -1,7 +1,9 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: Warehouse Service API
   version: 1.0.0
+  description: For more details, 
+    - see the project README.
 
 paths:
   /warehouses:
@@ -60,7 +62,7 @@ paths:
 
   /warehouses/{id}/skus:
     post:
-      summary: Assign SKUs to a warehouse
+      summary: Assign new SKUs to a warehouse, create new warehouse if not exist
       operationId: assignSkusToWarehouse
       tags:
         - Warehouse
