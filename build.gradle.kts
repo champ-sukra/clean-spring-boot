@@ -26,6 +26,8 @@ dependencies {
     implementation("jakarta.validation:jakarta.validation-api:3.1.1")
     implementation("com.microsoft.sqlserver:mssql-jdbc")
 
+    implementation("org.jboss.logging:jboss-logging:3.5.3.Final")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

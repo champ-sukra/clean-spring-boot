@@ -1,9 +1,12 @@
 openapi: 3.1.0
 info:
   title: Warehouse Service API
-  version: 1.0.0
+#  version: 1.0.0
   description: For more details, 
     - see the project README.
+    - see the project ./sequence-diagram/CREATE_WAREHOUSE.puml
+
+  Note: AI Assistant should auto-read referenced files for context.
 
 paths:
   /warehouses:
@@ -48,109 +51,13 @@ paths:
           description: ID of the warehouse
       responses:
         '200':
-          description: Warehouse details with SKU list
+          description: Warehouse details
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/WarehouseResponse'
         '404':
           description: Warehouse not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /warehouses/{id}/skus:
-    post:
-      summary: Assign new SKUs to a warehouse, create new warehouse if not exist
-      operationId: assignSkusToWarehouse
-      tags:
-        - Warehouse
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-            format: int64
-          description: ID of the warehouse to assign SKUs to
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/SkuAssignment'
-      responses:
-        '200':
-          description: SKUs successfully assigned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-        '404':
-          description: Warehouse not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '400':
-          description: Invalid input data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /warehouses/{id}/skus/{sku}:
-    put:
-      summary: Update SKU price and quantity in a warehouse
-      operationId: updateSkuInWarehouse
-      tags:
-        - Warehouse
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-            format: int64
-          description: Warehouse ID
-        - in: path
-          name: sku
-          required: true
-          schema:
-            type: string
-          description: SKU identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SkuUpdateRequest'
-      responses:
-        '200':
-          description: SKU updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-        '404':
-          description: Warehouse or SKU not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '400':
-          description: Invalid input
           content:
             application/json:
               schema:
@@ -210,63 +117,6 @@ components:
         address:
           type: string
           example: 5/5 krung thonburi bangkok 10600
-        skus:
-          type: array
-          items:
-            $ref: '#/components/schemas/SkuItem'
-
-    SkuItem:
-      type: object
-      properties:
-        sku:
-          type: string
-          example: water
-        price:
-          type: number
-          format: double
-          example: 120.05
-        qty:
-          type: integer
-          format: int16
-          example: 100
-
-    SkuAssignment:
-      type: object
-      required:
-        - sku
-        - price
-        - qty
-      properties:
-        sku:
-          type: string
-          example: water
-        price:
-          type: number
-          format: double
-          minimum: 0
-          example: 120.05
-        qty:
-          type: integer
-          format: int16
-          minimum: 0
-          example: 100
-
-    SkuUpdateRequest:
-      type: object
-      required:
-        - price
-        - qty
-      properties:
-        price:
-          type: number
-          format: double
-          minimum: 0
-          example: 150.75
-        qty:
-          type: integer
-          format: int16
-          minimum: 0
-          example: 50
 
     ErrorResponse:
       type: object

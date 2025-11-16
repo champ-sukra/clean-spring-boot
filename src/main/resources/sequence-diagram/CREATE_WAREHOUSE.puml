@@ -1,0 +1,42 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+Client -> WarehouseController: createWarehouse
+WarehouseController -> WarehouseController: validateInput
+alt validateInput == false
+    Client <-- WarehouseController:
+    note right of Client
+    {
+      "code": "invalid_input",
+      "message": "params must be ...."
+    }
+    end note
+end
+WarehouseController -> WarehouseService: createWarehouse
+WarehouseService -> WarehouseService: validateExisting
+alt validateExisting == true
+    Client <-- WarehouseService:
+    note right of Client
+    {
+      "code": "success",
+      "data": {
+          "warehouse_id": ${warehouse_id}
+        }
+    }
+    end note
+end
+WarehouseService -> WarehouseService: warehouseMapper::toWarehouseEntity
+WarehouseService -> WarehouseRepository: save
+Client <-- WarehouseRepository:
+note right of Client
+
+{
+  "code": "success",
+  "data": {
+    "warehouse_id": ${warehouse_id}
+  }
+}
+end note
+
+
+@enduml
