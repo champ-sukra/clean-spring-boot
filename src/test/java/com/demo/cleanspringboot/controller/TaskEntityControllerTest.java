@@ -1,8 +1,8 @@
 package com.demo.cleanspringboot.controller;
 
-import com.demo.cleanspringboot.dto.task.TaskRequest;
-import com.demo.cleanspringboot.dto.task.TaskResponse;
-import com.demo.cleanspringboot.service.TaskService;
+import com.demo.cleanspringboot.application.dto.task.TaskRequest;
+import com.demo.cleanspringboot.application.dto.task.TaskResponse;
+import com.demo.cleanspringboot.infrastructure.adapter.in.web.TaskController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

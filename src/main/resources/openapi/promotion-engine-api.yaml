@@ -1,0 +1,108 @@
+openapi: 3.0.3
+info:
+  title: Promotion Engine API (Minimal)
+  description: Minimal OpenAPI covering only the two provided tasks
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+security:
+  - bearerAuth: []
+
+paths:
+  /promotion-rules:
+    get:
+      tags: [Promotion Rules]
+      summary: List promotion rules
+      description: Retrieve a paginated list of promotion rules with optional filters
+      operationId: listPromotionRules
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE, EXPIRED]
+        - in: query
+          name: templateId
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: active
+          required: false
+          schema:
+            type: boolean
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: size
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/PagedPromotionRuleResponse.yaml'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/ErrorResponse.yaml'
+
+  /promotion-rules/{id}:
+    get:
+      tags: [Promotion Rules]
+      summary: Get promotion rule by ID
+      description: Retrieve a promotion rule including conditions, actions, and stacking
+      operationId: getPromotionRuleById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/PromotionRuleDetailEnvelope.yaml'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/ErrorResponse.yaml'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: './components/securitySchemes/bearerAuth.yaml'

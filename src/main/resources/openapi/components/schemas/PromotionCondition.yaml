@@ -1,0 +1,29 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  rule_id:
+    type: integer
+    format: int64
+  condition_type:
+    type: string
+    enum: [QUANTITY, AMOUNT, CATEGORY, CUSTOMER_SEGMENT, CHANNEL, PAYMENT_METHOD]
+  threshold_value:
+    type: number
+    format: double
+  include_product_ids:
+    type: array
+    items:
+      type: string
+  include_category_ids:
+    type: array
+    items:
+      type: string
+  exclude_product_ids:
+    type: array
+    items:
+      type: string
+  attributes:
+    type: object
+

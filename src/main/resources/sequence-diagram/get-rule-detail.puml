@@ -1,0 +1,51 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+title GetPromotionRuleDetail GET /api/v1/promotion-rules/{id}
+
+actor Client
+participant "PromotionRuleController\n(adapter/in/web)" as Controller
+participant "PromotionRuleService\n(application/service)" as Service
+participant "PromotionRuleRepository\n(infrastructure/adapter/out/persistence)" as Repository
+
+Client -> Controller
+activate Controller
+'Controller -> Controller: validateQueryParams
+'alt invalid parameters
+'    Client <-- Controller: 400
+'    note right of Client
+'    {
+'      "code": "invalid_request",
+'      "message": "Invalid status value"
+'    }
+'    end note
+'    deactivate Controller
+'end
+
+Controller -> Service: getPromotionRuleDetail(ruleId)
+activate Service
+
+Service -> Repository: findById(ruleId)
+activate Repository
+
+Repository -> Repository: query database
+note right of Repository
+ref: ~/resources/db.migrations/V1_create_promotion_rules_tables.sql
+-- promotion_rules
+end note
+
+Repository --> Service: PromotionRuleEntity
+deactivate Repository
+
+Service -> Service: transformToPromotionRuleDTO(promotionRuleEntity)
+Service --> Controller: PromotionRuleResponse
+deactivate Service
+
+Controller --> Client: 200 OK
+note right of Client
+return ref: ~/openapi/components/schemas/PromotionRuleResponse
+end note
+deactivate Controller
+
+@enduml
+

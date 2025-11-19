@@ -1,0 +1,21 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  rule_id:
+    type: integer
+    format: int64
+  action_type:
+    type: string
+    enum: [DISCOUNT_PERCENT, FIXED_PRICE, FREE_ITEM, FREE_SHIPPING, CASHBACK]
+  discount_value:
+    type: number
+    format: double
+  reward_items:
+    type: array
+    items:
+      type: string
+  attributes:
+    type: object
+

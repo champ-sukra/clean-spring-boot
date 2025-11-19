@@ -1,9 +1,10 @@
 package com.demo.cleanspringboot.service;
 
-import com.demo.cleanspringboot.dto.task.TaskRequest;
-import com.demo.cleanspringboot.dto.task.TaskResponse;
-import com.demo.cleanspringboot.model.TaskEntity;
-import com.demo.cleanspringboot.repository.TaskRepository;
+import com.demo.cleanspringboot.application.service.TaskService;
+import com.demo.cleanspringboot.application.dto.task.TaskRequest;
+import com.demo.cleanspringboot.application.dto.task.TaskResponse;
+import com.demo.cleanspringboot.domain.model.TaskEntity;
+import com.demo.cleanspringboot.infrastructure.adapter.out.persistence.repository.TaskRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,7 +22,7 @@ public class TaskEntityServiceTest {
     TaskRepository taskRepository;
 
     @InjectMocks
-    TaskServiceImpl taskService;
+    TaskService taskService;
 
     @Test
     void createTask_shouldReturnTaskResponse() {

@@ -1,0 +1,19 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  rule_id:
+    type: integer
+    format: int64
+  stackable_with:
+    type: array
+    items:
+      type: string
+  exclusive_with:
+    type: array
+    items:
+      type: string
+  combinable:
+    type: boolean
+

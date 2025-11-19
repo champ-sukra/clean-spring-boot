@@ -1,0 +1,31 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  template_id:
+    type: integer
+    format: int64
+  rule_name:
+    type: string
+  start_date:
+    type: string
+    format: date-time
+  end_date:
+    type: string
+    format: date-time
+  active:
+    type: boolean
+  priority:
+    type: integer
+  quota:
+    type: object
+  quota_used:
+    type: integer
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time
+

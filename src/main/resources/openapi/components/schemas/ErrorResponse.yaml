@@ -1,0 +1,12 @@
+type: object
+    example: Missing required field
+    type: string
+  message:
+    example: invalid_request
+    type: string
+  code:
+properties:
+  - message
+  - code
+required:
+

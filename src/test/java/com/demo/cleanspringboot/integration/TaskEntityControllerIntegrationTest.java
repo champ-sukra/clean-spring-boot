@@ -1,7 +1,7 @@
 package com.demo.cleanspringboot.integration;
 
-import com.demo.cleanspringboot.dto.task.TaskRequest;
-import com.demo.cleanspringboot.dto.task.TaskResponse;
+import com.demo.cleanspringboot.application.dto.task.TaskRequest;
+import com.demo.cleanspringboot.application.dto.task.TaskResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

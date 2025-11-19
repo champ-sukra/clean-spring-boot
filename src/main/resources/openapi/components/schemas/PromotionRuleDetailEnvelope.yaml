@@ -1,0 +1,21 @@
+type: object
+properties:
+  code:
+    type: string
+    example: success
+  data:
+    allOf:
+      - $ref: './PromotionRuleSummary.yaml'
+      - type: object
+        properties:
+          conditions:
+            type: array
+            items:
+              $ref: './PromotionCondition.yaml'
+          actions:
+            type: array
+            items:
+              $ref: './PromotionAction.yaml'
+          stacking:
+            $ref: './PromotionStacking.yaml'
+
