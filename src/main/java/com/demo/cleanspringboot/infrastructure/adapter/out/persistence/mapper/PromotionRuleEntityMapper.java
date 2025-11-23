@@ -22,15 +22,13 @@ public class PromotionRuleEntityMapper {
             entity.getEndDate()
         );
 
-        // Use package-private setters to reconstruct full state
         domain.setId(entity.getId());
-        domain.setActive(entity.getActive());
+        domain.setStatus(entity.getStatus());
         domain.setPriority(entity.getPriority());
         domain.setQuota(entity.getQuota());
         domain.setQuotaUsed(entity.getQuotaUsed());
         domain.setCreatedAt(entity.getCreatedAt());
         domain.setUpdatedAt(entity.getUpdatedAt());
-
         return domain;
     }
 
@@ -38,21 +36,18 @@ public class PromotionRuleEntityMapper {
         if (domain == null) {
             return null;
         }
-
         PromotionRuleEntity entity = new PromotionRuleEntity();
         entity.setId(domain.getId());
         entity.setTemplateId(domain.getTemplateId());
         entity.setRuleName(domain.getRuleName());
         entity.setStartDate(domain.getStartDate());
         entity.setEndDate(domain.getEndDate());
-        entity.setActive(domain.getActive());
+        entity.setStatus(domain.getStatus());
         entity.setPriority(domain.getPriority());
         entity.setQuota(domain.getQuota());
         entity.setQuotaUsed(domain.getQuotaUsed());
         entity.setCreatedAt(domain.getCreatedAt());
         entity.setUpdatedAt(domain.getUpdatedAt());
-
         return entity;
     }
 }
-

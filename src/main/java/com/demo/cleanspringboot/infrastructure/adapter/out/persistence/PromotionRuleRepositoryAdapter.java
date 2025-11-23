@@ -1,6 +1,6 @@
 package com.demo.cleanspringboot.infrastructure.adapter.out.persistence;
 
-import com.demo.cleanspringboot.application.port.out.PromotionRuleRepositoryPort;
+import com.demo.cleanspringboot.application.port.PromotionRuleRepositoryPort;
 import com.demo.cleanspringboot.domain.model.PromotionRule;
 import com.demo.cleanspringboot.infrastructure.adapter.out.persistence.entity.PromotionRuleEntity;
 import com.demo.cleanspringboot.infrastructure.adapter.out.persistence.mapper.PromotionRuleEntityMapper;

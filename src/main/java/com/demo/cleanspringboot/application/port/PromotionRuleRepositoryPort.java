@@ -1,4 +1,4 @@
-package com.demo.cleanspringboot.application.port.out;
+package com.demo.cleanspringboot.application.port;
 
 import com.demo.cleanspringboot.domain.model.PromotionRule;
 import java.util.Optional;

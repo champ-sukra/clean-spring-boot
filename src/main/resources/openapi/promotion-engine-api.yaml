@@ -12,28 +12,24 @@ security:
 paths:
   /promotion-rules:
     get:
-      tags: [Promotion Rules]
+      tags: [promotionRules]
       summary: List promotion rules
-      description: Retrieve a paginated list of promotion rules with optional filters
+      description: Retrieve a paginated list of promotion rules with optional filters.
       operationId: listPromotionRules
       parameters:
         - in: query
           name: status
+          description: Numeric status code (1=PENDING, 2=ACTIVE, 3=EXPIRED)
           required: false
           schema:
-            type: string
-            enum: [ACTIVE, INACTIVE, EXPIRED]
+            type: integer
+            enum: [1, 2, 3]
         - in: query
           name: templateId
           required: false
           schema:
             type: integer
             format: int64
-        - in: query
-          name: active
-          required: false
-          schema:
-            type: boolean
         - in: query
           name: page
           required: false
@@ -56,12 +52,37 @@ paths:
             application/json:
               schema:
                 $ref: './components/schemas/PagedPromotionRuleResponse.yaml'
+              examples:
+                sample:
+                  value:
+                    code: success
+                    data:
+                      items:
+                        - id: 10
+                          template_id: 5
+                          rule_name: "Flash Sale"
+                          start_date: "2025-01-01T00:00:00Z"
+                          end_date: "2025-01-07T23:59:59Z"
+                          status: 2
+                          priority: 0
+                          quota: { type: "LIMIT", value: 100 }
+                          quota_used: 12
+                          created_at: "2025-01-01T00:00:00Z"
+                          updated_at: "2025-01-02T00:00:00Z"
+                      total: 1
+                      page: 1
+                      size: 20
         '400':
           description: Invalid request
           content:
             application/json:
               schema:
                 $ref: './components/schemas/ErrorResponse.yaml'
+              examples:
+                invalidStatus:
+                  value:
+                    code: invalid_request
+                    message: Invalid status value
         '500':
           description: Server error
           content:
@@ -71,7 +92,7 @@ paths:
 
   /promotion-rules/{id}:
     get:
-      tags: [Promotion Rules]
+      tags: [promotionRule]
       summary: Get promotion rule by ID
       description: Retrieve a promotion rule including conditions, actions, and stacking
       operationId: getPromotionRuleById

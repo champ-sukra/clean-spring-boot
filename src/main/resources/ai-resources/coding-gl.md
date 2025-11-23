@@ -4,6 +4,114 @@
 
 ---
 
+## 0. 📋 Reading Sequence Diagrams (CRITICAL)
+
+### 0.1 Understanding Folder Paths from Sequence Diagrams
+
+When implementing features, **ALWAYS refer to sequence diagrams first**. The participant definition contains critical information:
+
+```puml
+participant "PromotionRuleController\n(infrastructure/adapter/in/web)" as Controller
+participant "PromotionRuleService\n(application/service)" as Service
+participant "PromotionRuleRepository\n(infrastructure/adapter/out/persistence)" as Repository
+```
+
+**The second line (in parentheses) is the EXACT folder path where the class MUST be located.**
+
+### 0.2 Folder Path Mapping
+
+| Participant | Class Name | Folder Path (from project root) |
+|------------|------------|--------------------------------|
+| Controller | `PromotionRuleController` | `src/main/java/com/demo/cleanspringboot/infrastructure/adapter/in/web/` |
+| Service | `PromotionRuleService` | `src/main/java/com/demo/cleanspringboot/application/service/` |
+| Repository | `PromotionRuleRepository` | `src/main/java/com/demo/cleanspringboot/infrastructure/adapter/out/persistence/` |
+
+### 0.3 Rules for Following Sequence Diagrams
+
+1. **ALWAYS create/locate classes in the EXACT folder path specified**
+   - The path shown in parentheses is MANDATORY
+   - Do NOT move classes to different folders
+   - Do NOT simplify the folder structure
+
+2. **Follow the interaction flow exactly as shown**
+   - If diagram shows: `Controller → Service → Repository`
+   - Then implement exactly that: Controller calls Service, Service calls Repository
+   - Do NOT skip layers or add extra layers not shown
+
+3. **Use the method names shown in the diagram**
+   - If diagram shows: `Service: getPromotionRuleDetail(ruleId)`
+   - Then implement method with that exact name and signature
+
+4. **Return types must match the diagram**
+   - If diagram shows: `Repository --> Service: PromotionRuleEntity`
+   - Then Repository must return `PromotionRuleEntity` type
+
+5. **Transformation points are shown in the diagram**
+   - If diagram shows: `Service -> Service: transformToPromotionRuleDTO(promotionRuleEntity)`
+   - Then implement that transformation in the Service layer
+
+### 0.4 Example Implementation from Diagram
+
+Given this sequence:
+```puml
+Controller -> Service: getPromotionRuleDetail(ruleId)
+Service -> Repository: findById(ruleId)
+Repository --> Service: PromotionRuleEntity
+Service -> Service: transformToPromotionRuleDTO(promotionRuleEntity)
+Service --> Controller: PromotionRuleResponse
+```
+
+Implement as:
+
+```java
+// infrastructure/adapter/in/web/PromotionRuleController.java
+@RestController
+@RequestMapping("/api/v1/promotion-engine")
+public class PromotionRuleController {
+    private final PromotionRuleService service;
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<PromotionRuleResponse> getPromotionRuleDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getPromotionRuleDetail(id));
+    }
+}
+
+// application/service/PromotionRuleService.java
+@Service
+public class PromotionRuleService {
+    private final PromotionRuleRepository repository;
+    
+    public PromotionRuleResponse getPromotionRuleDetail(Long ruleId) {
+        PromotionRuleEntity entity = repository.findById(ruleId)
+            .orElseThrow(() -> new ResourceNotFoundException("PromotionRule", ruleId));
+        return transformToPromotionRuleDTO(entity);
+    }
+    
+    private PromotionRuleResponse transformToPromotionRuleDTO(PromotionRuleEntity entity) {
+        // transformation logic
+    }
+}
+
+// infrastructure/adapter/out/persistence/PromotionRuleRepository.java
+@Repository
+public interface PromotionRuleRepository extends JpaRepository<PromotionRuleEntity, Long> {
+}
+```
+
+### 0.5 Checklist Before Implementation
+
+- [ ] Read the sequence diagram completely
+- [ ] Identify all participants and their folder paths
+- [ ] Note all method names and parameters
+- [ ] Identify transformation points
+- [ ] Note return types for each method
+- [ ] Create classes in the EXACT folder paths shown
+- [ ] Implement the EXACT flow shown in the diagram
+
+**⚠️ CRITICAL: Sequence diagrams are the source of truth. Code structure must match them exactly.**
+
+---
+
 ## 1. 📂 High-Level Project Structure
 
 `com.example.project`
@@ -237,6 +345,13 @@ public class PaymentGatewayAdapter implements PaymentGatewayPort {
 ## 6. ✔️ Core Coding Rules
 
 ```markdown
+0. Sequence Diagrams (HIGHEST PRIORITY):
+   - ALWAYS read sequence diagrams before implementing
+   - Follow folder paths EXACTLY as specified in diagrams
+   - Use method names EXACTLY as shown in diagrams
+   - Follow the interaction flow EXACTLY as diagrammed
+   - Sequence diagrams override all other guidelines if conflicts exist
+
 1. Domain layer:
    - NO @Entity, @Table, @Service, @Component, @Autowired.
    - Only plain Java + business logic.
@@ -416,13 +531,15 @@ Before committing code:
 
 ## 10. 🔚 Summary Principles
 
-1. **Business first** → Domain models express core business logic.  
-2. **Framework as detail** → Spring, JPA, REST are replaceable adapters.  
-3. **Ports define contracts** → Adapters fulfill them.  
-4. **Orchestration lives in application/services** → Not in controllers or adapters.  
-5. **Explicit mapping** → Domain, DTO, and Entity never cross boundaries.  
-6. **External API calls always go through port/out** → never directly from inbound.  
-7. **Test the core** → Domain and use cases are the highest-value tests.
+1. **Sequence diagrams are the source of truth** → Always implement EXACTLY what the diagram shows.
+2. **Folder paths are mandatory** → Use the exact paths specified in diagram participants.  
+3. **Business first** → Domain models express core business logic.  
+4. **Framework as detail** → Spring, JPA, REST are replaceable adapters.  
+5. **Ports define contracts** → Adapters fulfill them.  
+6. **Orchestration lives in application/services** → Not in controllers or adapters.  
+7. **Explicit mapping** → Domain, DTO, and Entity never cross boundaries.  
+8. **External API calls always go through port/out** → never directly from inbound.  
+9. **Test the core** → Domain and use cases are the highest-value tests.
 
 ---
 ````

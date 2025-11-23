@@ -14,8 +14,10 @@ properties:
   end_date:
     type: string
     format: date-time
-  active:
-    type: boolean
+  status:
+    type: integer
+    description: Numeric status code (1=PENDING,2=ACTIVE,3=EXPIRED)
+    enum: [1,2,3]
   priority:
     type: integer
   quota:
@@ -28,4 +30,3 @@ properties:
   updated_at:
     type: string
     format: date-time
-

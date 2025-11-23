@@ -13,7 +13,7 @@ public class PromotionRule {
     private String ruleName;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private Boolean active;
+    private Integer status; // 1=PENDING,2=ACTIVE,3=EXPIRED
     private Integer priority;
     private String quota; // JSON string
     private Integer quotaUsed;
@@ -31,7 +31,7 @@ public class PromotionRule {
         rule.ruleName = ruleName;
         rule.startDate = startDate;
         rule.endDate = endDate;
-        rule.active = true;
+        rule.status = 1; // PENDING by default until activated
         rule.priority = 0;
         rule.quotaUsed = 0;
         rule.createdAt = LocalDateTime.now();
@@ -55,17 +55,17 @@ public class PromotionRule {
     }
 
     // Business methods
-    public boolean isActive() {
-        return active != null && active;
-    }
+    public boolean isActive() { return status != null && status == 2; }
+    public boolean isExpired() { return status != null && status == 3 || LocalDateTime.now().isAfter(endDate); }
+    public boolean isPending() { return status != null && status == 1; }
 
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(endDate);
-    }
-
-    public boolean isValid() {
+    public boolean isValidWindow() {
         LocalDateTime now = LocalDateTime.now();
-        return isActive() && !now.isBefore(startDate) && !now.isAfter(endDate);
+        return !now.isBefore(startDate) && !now.isAfter(endDate);
+    }
+
+    public boolean isCurrentlyApplicable() {
+        return isActive() && isValidWindow() && !isExpired();
     }
 
     // Getters
@@ -74,7 +74,7 @@ public class PromotionRule {
     public String getRuleName() { return ruleName; }
     public LocalDateTime getStartDate() { return startDate; }
     public LocalDateTime getEndDate() { return endDate; }
-    public Boolean getActive() { return active; }
+    public Integer getStatus() { return status; }
     public Integer getPriority() { return priority; }
     public String getQuota() { return quota; }
     public Integer getQuotaUsed() { return quotaUsed; }
@@ -87,11 +87,10 @@ public class PromotionRule {
     public void setRuleName(String ruleName) { this.ruleName = ruleName; }
     public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }
     public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }
-    public void setActive(Boolean active) { this.active = active; }
+    public void setStatus(Integer status) { this.status = status; }
     public void setPriority(Integer priority) { this.priority = priority; }
     public void setQuota(String quota) { this.quota = quota; }
     public void setQuotaUsed(Integer quotaUsed) { this.quotaUsed = quotaUsed; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
-

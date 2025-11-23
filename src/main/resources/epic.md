@@ -61,19 +61,19 @@ To build a promotion engine that support multiple stackable, configurable promot
 
 ### Table: `promotion_rules`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | INT UNSIGNED (PK) | Unique identifier of the rule |
-| `template_id` | INT UNSIGNED (FK → promotion_template.id) | References the template this rule belongs to |
-| `rule_name` | VARCHAR(255) | Business name of the promotion rule |
-| `start_date` | DATETIME | Rule effective start date |
-| `end_date` | DATETIME | Rule expiration date |
-| `active` | BOOLEAN | Whether this rule is currently active |
-| `priority` | INT | Determines stacking order (lower = higher priority) |
-| `quota` | JSON | - ENUM(`GLOBAL`,`PER_CUSTOMER`,`PER_ORDER`,`PER_PRODUCT`)<br>- limit |
-| `quota_used` | INT | Current number of redemption |
-| `created_at` | DATETIME | Record creation timestamp |
-| `updated_at` | DATETIME | Last update timestamp |
+| Field         | Type                                      | Description                                                                        |
+|---------------|-------------------------------------------|------------------------------------------------------------------------------------|
+| `id`          | INT UNSIGNED (PK)                         | Unique identifier of the rule                                                      |
+| `template_id` | INT UNSIGNED (FK → promotion_template.id) | References the template this rule belongs to                                       |
+| `rule_name`   | VARCHAR(255)                              | Business name of the promotion rule                                                |
+| `start_date`  | DATETIME                                  | Rule effective start date                                                          |
+| `end_date`    | DATETIME                                  | Rule expiration date                                                               |
+| `status`      | SMALLINT                                  | Whether this rule is currently active (1 ->`PENDING`, 2 ->`ACTIVE`, 3 ->`EXPIRED`) |
+| `priority`    | INT                                       | Determines stacking order (lower = higher priority)                                |
+| `quota`       | JSON                                      | - ENUM(`GLOBAL`,`PER_CUSTOMER`,`PER_ORDER`,`PER_PRODUCT`)<br>- limit               |
+| `quota_used`  | INT                                       | Current number of redemption                                                       |
+| `created_at`  | DATETIME                                  | Record creation timestamp                                                          |
+| `updated_at`  | DATETIME                                  | Last update timestamp                                                              |
 
 ### Table: `promotion_condition`
 

@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS promotion_rules (
   rule_name VARCHAR(255) NOT NULL COMMENT 'Business name of the rule',
   start_date DATETIME NOT NULL COMMENT 'Rule effective start date',
   end_date DATETIME NOT NULL COMMENT 'Rule expiration date',
-  active BOOLEAN DEFAULT TRUE COMMENT 'Whether rule is active',
+  status INT DEFAULT 1 COMMENT 'Rule status: 1=PENDING, 2=ACTIVE, 3=EXPIRED',
   priority INT DEFAULT 0 COMMENT 'Stacking order (lower = higher priority)',
   quota JSON COMMENT 'Quota configuration: {"type":"GLOBAL|PER_CUSTOMER|PER_ORDER|PER_PRODUCT","limit":number}',
   quota_used INT DEFAULT 0 COMMENT 'Current redemption count',
@@ -36,11 +36,12 @@ CREATE TABLE IF NOT EXISTS promotion_rules (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (template_id) REFERENCES promotion_templates(id) ON DELETE RESTRICT,
   INDEX idx_template_id (template_id),
-  INDEX idx_active (active),
+  INDEX idx_status (status),
   INDEX idx_dates (start_date, end_date),
   INDEX idx_priority (priority),
   CHECK (end_date > start_date),
-  CHECK (quota_used >= 0)
+  CHECK (quota_used >= 0),
+  CHECK (status IN (1, 2, 3))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Active promotion rule instances';
 
 -- ============================================================

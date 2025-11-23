@@ -1,0 +1,47 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+' Sequence Diagram: GET /api/v1/promotion-rules - List Promotion Rules
+
+title GET Promotion Rules - List with Filters
+
+actor Client
+participant "PromotionRuleController\n(infrastructure/adapter/in/web)" as Controller
+participant "PromotionRuleService\n(application/service)" as Service
+participant "PromotionRuleRepository\n(infrastructure/adapter/out/persistence)" as Repository
+
+Client -> Controller
+activate Controller
+Controller -> Controller: validateQueryParams
+alt invalid parameters
+    Client <-- Controller: 400
+    note right of Client
+    {
+      "code": "invalid_request",
+      "message": "Invalid status value"
+    }
+    end note
+    deactivate Controller
+end
+
+Controller -> Service: getPromotionRules(filters, page, size)
+activate Service
+
+Service -> Repository: findByFilters(status, templateId, pageable)
+activate Repository
+
+Repository -> Repository: SELECT * FROM promotion_rules\nWHERE 'status' = ? AND 'template_id' = ?\nLIMIT ? OFFSET ?
+Repository --> Service: List<PromotionRuleEntity>
+deactivate Repository
+
+Service -> Service: transformToPromotionRulesDTO(promotionRuleEntities)
+Service --> Controller: PagedResponse<PromotionRuleResponse>
+deactivate Service
+
+Controller --> Client: 200 OK
+note right of Client
+return ref: tags: [promotionRules]  ~/openapi/promotion-engine-api.yaml
+end note
+deactivate Controller
+
+@enduml
+

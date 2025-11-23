@@ -1,11 +1,11 @@
 @startuml
 'https://plantuml.com/sequence-diagram
 
-title GetPromotionRuleDetail GET /api/v1/promotion-rules/{id}
+title EvaluatePromotionRuleDetail POST /api/v1/promotion-rules/evaluate
 
 actor Client
-participant "PromotionRuleController\n(infrastructure/adapter/in/web)" as Controller
-participant "PromotionRuleService\n(application/service)" as Service
+participant "PromotionRedeemController\n(infrastructure/adapter/in/web)" as Controller
+participant "PromotionEvaluationService\n(application/service)" as Service
 participant "PromotionRuleRepository\n(infrastructure/adapter/out/persistence)" as Repository
 
 Client -> Controller
