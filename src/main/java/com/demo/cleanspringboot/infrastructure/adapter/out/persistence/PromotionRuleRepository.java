@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * Spring Data JPA repository for PromotionRule
  * Direct persistence access as shown in sequence diagram
@@ -22,5 +24,12 @@ public interface PromotionRuleRepository extends JpaRepository<PromotionRuleEnti
         @Param("status") Integer status,
         @Param("templateId") Long templateId,
         Pageable pageable);
+
+    /**
+     * Find all active promotion rules for building rule index
+     * Status 2 = ACTIVE
+     */
+    @Query("SELECT p FROM PromotionRuleEntity p WHERE p.status = 2")
+    List<PromotionRuleEntity> findActivePromotionRules();
 }
 

@@ -4,6 +4,17 @@
 
 ---
 
+## CRITICAL: AI Response Format
+
+**NEVER provide summaries, explanations, or update notes in chat responses.**
+- Do NOT say "Here's what was accomplished" or "Summary:"
+- Do NOT list changes made
+- Do NOT provide "Implementation Complete" sections
+- ONLY respond with direct answers or confirmation when task is done
+- Let the code and tool outputs speak for themselves
+
+---
+
 ## 0. 📋 Reading Sequence Diagrams (CRITICAL)
 
 ### 0.1 Understanding Folder Paths from Sequence Diagrams
@@ -542,4 +553,3 @@ Before committing code:
 9. **Test the core** → Domain and use cases are the highest-value tests.
 
 ---
-````

@@ -4,6 +4,9 @@ import com.demo.cleanspringboot.application.dto.response.PagedPromotionRuleRespo
 import com.demo.cleanspringboot.application.dto.response.PromotionRuleResponse;
 import com.demo.cleanspringboot.application.service.PromotionRuleService;
 import com.demo.cleanspringboot.common.exception.ErrorResponse;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +19,45 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/promotion-rules")
 public class PromotionRuleController {
 
+    private static final Logger logger = LoggerFactory.getLogger(PromotionRuleController.class);
+
     private final PromotionRuleService promotionRuleService;
 
     public PromotionRuleController(PromotionRuleService promotionRuleService) {
         this.promotionRuleService = promotionRuleService;
+    }
+
+    /**
+     * Initialize and build rule index on application startup
+     * As shown in sequence diagram: preparePromotionRuleData()
+     */
+    @PostConstruct
+    public void preparePromotionRuleData() {
+        logger.info("Application startup - Preparing promotion rule data");
+        try {
+            promotionRuleService.buildPromotionRuleData();
+            logger.info("Promotion rule data initialization completed successfully");
+        } catch (Exception e) {
+            logger.error("Failed to prepare promotion rule data on startup", e);
+            // Don't fail the application startup, but log the error
+        }
+    }
+
+    /**
+     * Manual endpoint to rebuild rule index
+     * Can be called by scheduler or admin
+     */
+    @PostMapping("/rebuild-index")
+    public ResponseEntity<ApiResponse<String>> rebuildRuleIndex() {
+        logger.info("Manual rule index rebuild requested");
+        try {
+            promotionRuleService.buildPromotionRuleData();
+            return ResponseEntity.ok(new ApiResponse<>("success", "Rule index rebuilt successfully"));
+        } catch (Exception e) {
+            logger.error("Failed to rebuild rule index", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponse<>("error", "Failed to rebuild rule index: " + e.getMessage()));
+        }
     }
 
     @GetMapping

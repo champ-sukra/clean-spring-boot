@@ -1,11 +1,12 @@
 @startuml
 'https://plantuml.com/sequence-diagram
 
-title EvaluatePromotionRuleDetail POST /api/v1/promotion-rules/evaluate
+title EvaluatePromotionRuleDetail POST /api/v1/promotion-rules/evaluate?mode=light
 
 actor Client
 participant "PromotionRedeemController\n(infrastructure/adapter/in/web)" as Controller
 participant "PromotionEvaluationService\n(application/service)" as Service
+participant "PromotionEvaluationService\n(domain/service)" as DomainService
 participant "PromotionRuleRepository\n(infrastructure/adapter/out/persistence)" as Repository
 
 Client -> Controller
@@ -22,10 +23,21 @@ activate Controller
 '    deactivate Controller
 'end
 
-Controller -> Service: getPromotionRuleDetail(ruleId)
+
+
+'RuleIndex -> RuleIndex: lookup SKU ruleIds\n( product_rule_map[sku] )
+'RuleIndex -> RuleIndex: lookup category ruleIds\n( category_rule_map[category] )
+'RuleIndex -> RuleIndex: lookup payment ruleIds\n( payment_rule_map[payment] )
+'RuleIndex -> RuleIndex: lookup segment ruleIds\n( segment_rule_map[segment] )
+
+
+Controller -> Service: evaluatePromotionRules(item, mode)
 activate Service
 
-Service -> Repository: findById(ruleId)
+Service -> DomainService: evaluatePromotionRules(item, mode)
+activate DomainService
+
+DomainService -> Repository: find
 activate Repository
 
 Repository -> Repository: query database
