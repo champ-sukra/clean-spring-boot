@@ -1,8 +1,8 @@
 # Promotion-Engine Capabilities EPIC
 
 **Page ID:** 640155657  
-**Last Updated:** 2025-11-30T01:08:38.788Z  
-**Version:** 9
+**Last Updated:** 2025-12-07  
+**Version:** 13
 
 ## Objective
 To build a promotion engine that support multiple stackable, configurable promotion templates.
@@ -31,6 +31,8 @@ To build a promotion engine that support multiple stackable, configurable promot
 - **Database:** RDS - MySQL
 - **Programming language:** Golang
 - **Caching:** In-memory
+
+---
 
 ## Database Schema
 
@@ -68,22 +70,32 @@ To build a promotion engine that support multiple stackable, configurable promot
 |-------|------|-------------|
 | `id` | INT UNSIGNED (PK) | Unique identifier of the condition |
 | `rule_id` | INT UNSIGNED (FK → promotion_rule.id) | References the rule this condition belongs to |
-| `condition_type` | ENUM(`QUANTITY`,`AMOUNT`,`CATEGORY`,`CUSTOMER_SEGMENT`,`CHANNEL`,`PAYMENT_METHOD`,`credit_card_type_ids`) | Type of eligibility condition |
+| `condition_type` | ENUM(`QUANTITY`,`AMOUNT`,`CATEGORY`,`CUSTOMER_SEGMENT`,`CHANNEL,PAYMENT_METHOD, PRODUCT`) | Type of eligibility condition |
 | `threshold_value` | DECIMAL(10,2) | Minimum required quantity or amount |
 | `include_product_ids` | JSON | List of SKUs or product groups that qualify |
 | `include_category_ids` | JSON | List of category groups that qualify |
 | `exclude_product_ids` | JSON | SKUs or groups to exclude from eligibility |
-| `attributes` | JSON | Flexible key-value metadata (e.g. `{"buy_qty": 2}`) |
+| `attributes` | JSON | Flexible key-value metadata |
+
+**Condition Examples:**
+
+| Condition      | Threshold | Attribute (E.g) |
+|----------------|-----------|-----------------|
+| Product        | null | null |
+| Quantity       | 100 | null |
+| Amount         | 1000 | null |
+| Payment Method | null | `{"payment_methods": ["CREDIT_CARD", "DEBIT_CARD"]}` |
+| Segment        | null | `{"segment": "FIRST_ORDER"}` |
 
 ### Table: `promotion_action`
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | INT UNSIGNED (PK) | Unique identifier of the reward action |
-| `rule_id` | INT UNSIGNED (FK → promotion_rule.id) | References the rule this action belongs to |
-| `action_type` | ENUM(`DISCOUNT_PERCENT`,`FIXED_PRICE`,`FREE_ITEM`,`FREE_SHIPPING`,`CASHBACK`) | Type of reward action |
-| `discount_value` | DECIMAL(10,2) | Discount amount or percentage |
-| `reward_items` | JSON | Reward SKUs or item list |
+| Field | Type | Description                                                  |
+|-------|------|--------------------------------------------------------------|
+| `id` | INT UNSIGNED (PK) | Unique identifier of the reward action                       |
+| `rule_id` | INT UNSIGNED (FK → promotion_rule.id) | References the rule this action belongs to                   |
+| `action_type` | ENUM(`DISCOUNT_PERCENT`,`FIXED_PRICE`,`FREE_ITEM`,`FREE_SHIPPING`,`CASHBACK`) | Type of reward action                                        |
+| `discount_value` | DECIMAL(10,2) | Discount amount or percentage                                |
+| `reward_items` | JSON | Reward SKUs or item list (e.g `["PROD001"]`)|
 | `attributes` | JSON | Extra parameters (e.g. `{"reward_qty": 1,"fixed_price": 99}`) |
 
 ### Table: `promotion_stacking`
@@ -118,6 +130,49 @@ To build a promotion engine that support multiple stackable, configurable promot
 | `promotion_condition` → `product_group (product)` | N : 1 | Optional SKU/category mapping |
 | `promotion_action` → `product_group (product)` | N : 1 | Optional SKU/category mapping |
 | `promotion_rule` → `promotion_result_log` | 1 : N | Logs all evaluations for analytics |
+
+---
+
+### In-Memory Rule Detail Structure for Evaluation Engine
+
+**EvaluateRule**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ruleId` | INT | Unique rule identifier |
+| `priority` | INT | Rule priority (lower = higher priority) |
+| `startDate` | DATETIME | Rule active start |
+| `endDate` | DATETIME | Rule active end |
+| `conditions` | List<EvaluationCondition> | List of eligibility conditions |
+| `actions` | List<EvaluateAction> | List of reward actions |
+| `quota` | QuotaDefinition | Quota limits for rule usage |
+| `quotaUsed` | INT | Current global usage count |
+| `stacking` | StackingConfig | Stacking / combinability settings |
+
+**EvaluationCondition**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | ENUM | Condition type (QUANTITY, AMOUNT, PRODUCT, CATEGORY, PAYMENT_METHOD, CUSTOMER_SEGMENT, FIRST_ORDER, CHANNEL, BRAND, SHIPPING_METHOD) |
+| `buyQty` | INT | Required quantity to qualify (QUANTITY condition only) |
+| `minAmount` | DECIMAL | Required minimum spend (AMOUNT condition only) |
+| `productCodes` | List<String> | Eligible product codes (PRODUCT condition) |
+| `categoryCodes` | List<String> | Eligible category codes (CATEGORY condition) |
+| `paymentMethods` | List<String> | Required payment methods |
+| `segment` | String | Customer segment (e.g., FIRST_ORDER) |
+
+**EvaluateAction**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | ENUM | Action type (DISCOUNT_PERCENT, FIXED_PRICE, FREE_ITEM, FREE_SHIPPING, CASHBACK) |
+| `discountPercent` | DECIMAL | Discount percentage (0–100) |
+| `fixedPrice` | DECIMAL | Fixed price for rewarded item |
+| `rewardProductCodes` | List<String> | Reward product codes (for PWP / Buy X Get Y) |
+| `rewardQty` | INT | Number of items rewarded |
+| `attributes` | JSON Map | Additional optional parameters |
+
+---
 
 ## API Endpoints
 

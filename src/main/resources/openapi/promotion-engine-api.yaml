@@ -123,6 +123,123 @@ paths:
               schema:
                 $ref: './components/schemas/ErrorResponse.yaml'
 
+  /promotion-rules/evaluate:
+    post:
+      tags: [promotionEvaluation]
+      summary: Evaluate eligible promotions
+      description: |
+        Evaluate promotion rules for given cart context and return list of eligible rule IDs.
+        This is a read-only operation with no state change.
+        Source: ~/tasks/engine-evaluate.md
+      operationId: evaluatePromotions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  nullable: true
+                  description: Evaluation mode (reserved for future use)
+                customer_id:
+                  type: string
+                  description: Customer identifier
+                cart_id:
+                  type: string
+                  description: Cart identifier
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - product_id
+                      - quantity
+                      - price
+                    properties:
+                      product_id:
+                        type: string
+                        description: Product SKU
+                      category_id:
+                        type: string
+                        description: Product category ID
+                      quantity:
+                        type: integer
+                        minimum: 1
+                        description: Quantity of product
+                      price:
+                        type: number
+                        format: double
+                        description: Unit price of product
+                payment_method:
+                  type: string
+                  nullable: true
+                  description: Payment method (for full evaluation mode)
+                shipping_method:
+                  type: string
+                  nullable: true
+                  description: Shipping method (for full evaluation mode)
+              required:
+                - cart_id
+                - items
+            example:
+              mode: null
+              customer_id: "12345"
+              cart_id: "cart-abc-123"
+              items:
+                - product_id: "SKU-001"
+                  category_id: "CAT-100"
+                  quantity: 2
+                  price: 100.00
+                - product_id: "SKU-002"
+                  category_id: "CAT-100"
+                  quantity: 5
+                  price: 100.00
+              payment_method: null
+              shipping_method: null
+      responses:
+        '200':
+          description: Successfully evaluated promotions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      eligible_rule_ids:
+                        type: array
+                        items:
+                          type: integer
+                          format: int64
+                        description: List of promotion rule IDs that the cart is eligible for
+                      evaluated_at:
+                        type: string
+                        format: date-time
+                        description: Timestamp of evaluation (ISO 8601)
+              example:
+                code: "success"
+                data:
+                  eligible_rule_ids: [10, 15, 23]
+                  evaluated_at: "2025-11-26T10:30:00Z"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/schemas/ErrorResponse.yaml'
+
 components:
   securitySchemes:
     bearerAuth:

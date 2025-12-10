@@ -1,0 +1,79 @@
+@startuml
+title Evaluate Promotion Rules\nPOST /api/v1/promotion-engine/evaluate
+
+actor Client
+participant "PromotionEngineController\n(infrastructure/adapter/in/web)" as Controller
+participant "PromotionEngineService\n(application/service)" as AppService
+participant "RuleCache (in-mem)\n(infrastructure/cache)" as RuleCache
+participant "EvaluateRuleStore (in-mem)\n(infrastructure/cache)" as RuleStore
+participant "PromotionEvaluationService\n(domain/service)" as DomainService
+
+Client -> Controller: POST /promotion-engine/evaluate\n(cart, mode)
+activate Controller
+
+Controller -> AppService: evaluate(cart, mode)
+activate AppService
+
+== STEP 1 — Extract ruleIds from RuleIndex ==
+
+AppService -> RuleCache: findRuleIds(cart.skus,\ncart.categories,\ncart.payment,\ncart.segment)
+activate RuleCache
+
+note right of RuleCache
+RuleIndex stored in-memory:
+productRuleMap
+categoryRuleMap
+paymentRuleMap
+segmentRuleMap
+
+Returns merged & de-duplicated:
+  e.g. [1,2,4,5,7,8]
+end note
+
+RuleCache --> AppService: List<ruleId>
+deactivate RuleCache
+
+== STEP 2 — Load EvaluateRule objects ==
+
+AppService -> RuleStore: getEvaluateRules(ruleIds)
+activate RuleStore
+
+note right of RuleStore
+EvaluateRuleStore holds full\npre-parsed EvaluateRule models:
+- typed conditions
+- typed actions
+- parsed quota struct
+- parsed stacking
+- start/end unix
+end note
+
+RuleStore --> AppService: List<EvaluateRule>
+deactivate RuleStore
+
+== STEP 3 — Domain Evaluation ==
+
+AppService -> DomainService: evaluateRules(rules, cart, mode)
+activate DomainService
+
+DomainService -> DomainService: applyConditionsAndActions()
+note right of DomainService
+EvaluateRule execution:
+- condition filtering
+- action calculation
+- stacking logic
+- quota shallow check
+- mode(light/medium/full) based constraints
+end note
+
+DomainService --> AppService: EvaluationResult
+deactivate DomainService
+
+== STEP 4 — Return Response ==
+
+AppService --> Controller: PromotionEvaluateResponse
+deactivate AppService
+
+Controller --> Client: 200 OK\n(final eligible promotions)
+deactivate Controller
+
+@enduml

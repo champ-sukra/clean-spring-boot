@@ -1,13 +1,13 @@
 @startuml
 'https://plantuml.com/sequence-diagram
 
-title EvaluatePromotionRuleDetail POST /api/v1/promotion-rules/evaluate?mode=light
+title EvaluatePromotionRuleDetail POST /api/v1/promotion-rules/evaluate
 
 actor Client
-participant "PromotionRedeemController\n(infrastructure/adapter/in/web)" as Controller
+participant "PromotionEvaluationController\n(infrastructure/adapter/in/web)" as Controller
 participant "PromotionEvaluationService\n(application/service)" as Service
-participant "PromotionEvaluationService\n(domain/service)" as DomainService
-participant "PromotionRuleRepository\n(infrastructure/adapter/out/persistence)" as Repository
+participant "RuleCache\n(infrastructure/adapter/cache)" as Cache
+participant "PromotionRuleDomainService\n(domain/service)" as DomainService
 
 Client -> Controller
 activate Controller
@@ -31,31 +31,45 @@ activate Controller
 'RuleIndex -> RuleIndex: lookup segment ruleIds\n( segment_rule_map[segment] )
 
 
-Controller -> Service: evaluatePromotionRules(item, mode)
+Controller -> Service: evaluatePromotionRules(carts, paymentMethod)
 activate Service
 
-Service -> DomainService: evaluatePromotionRules(item, mode)
-activate DomainService
+'Service -> DomainService: evaluatePromotionRules(carts, paymentMethod)
+'activate DomainService
 
-DomainService -> Repository: find
-activate Repository
+loop for each cart in carts
+    Service -> Cache: findRuleIdsBySku(cart.sku)
+    Service <-- Cache: List<ruleIds>
+end
+Service -> Cache: findRuleIdsByPaymentMethod(paymentMethod)
+Service <-- Cache: List<ruleIds>
 
-Repository -> Repository: query database
-note right of Repository
-ref: ~/resources/db.migrations/V1_create_promotion_rules_tables.sql
--- promotion_rules
+Service -> Service: filterRuleIds(mergedRuleIds)
+note right of Service
+- filter by current time (end)
+- deduplicate ruleIds
 end note
+loop for each ruleId in filteredRuleIds
+    Service -> Cache: getEvaluatePromotionRule(filteredRuleIds)
+    Service <-- Cache: EvaluatePromotionRule
+end
 
-Repository --> Service: PromotionRuleEntity
-deactivate Repository
+Service -> DomainService: evaluateEligibleRules(carts, evaluateRules)
+DomainService -> DomainService: applyCondition(ConditionType.QUANTITY, carts, evaluateRules)
+note right of DomainService
+'- filter by quota
+'- sortEvaluatePromotionRulesByPriority
+end note
+Service <-- DomainService: List<EvaluatePromotionRule>
 
-Service -> Service: transformToPromotionRuleDTO(promotionRuleEntity)
-Service --> Controller: PromotionRuleResponse
+
+Service -> Service: transformToEvaluatePromotionRuleResult(EvaluatePromotionRule)
+Service --> Controller: EvaluatePromotionRuleResult
 deactivate Service
 
 Controller --> Client: 200 OK
 note right of Client
-return ref: tags: [promotionRule]  ~/openapi/promotion-engine-api.yaml
+return ref: tags: [promotionEvaluation]  ~/openapi/promotion-engine-api.yaml
 end note
 deactivate Controller
 

@@ -1,9 +1,11 @@
 package com.demo.cleanspringboot.infrastructure.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 /**
  * JPA Entity for promotion_action table
+ * Source: ~/epic.md -- promotion_action table
  */
 @Entity
 @Table(name = "promotion_action")
@@ -19,8 +21,8 @@ public class PromotionActionEntity {
     @Column(name = "action_type")
     private String actionType;
 
-    @Column(name = "discount_value")
-    private String discountValue;
+    @Column(name = "discount_value", precision = 10, scale = 2)
+    private BigDecimal discountValue;
 
     @Column(name = "reward_items", columnDefinition = "JSON")
     private String rewardItems;
@@ -40,8 +42,8 @@ public class PromotionActionEntity {
     public String getActionType() { return actionType; }
     public void setActionType(String actionType) { this.actionType = actionType; }
 
-    public String getDiscountValue() { return discountValue; }
-    public void setDiscountValue(String discountValue) { this.discountValue = discountValue; }
+    public BigDecimal getDiscountValue() { return discountValue; }
+    public void setDiscountValue(BigDecimal discountValue) { this.discountValue = discountValue; }
 
     public String getRewardItems() { return rewardItems; }
     public void setRewardItems(String rewardItems) { this.rewardItems = rewardItems; }

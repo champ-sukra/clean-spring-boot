@@ -6,13 +6,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * In-Memory Cache for Rule Index and Evaluate Promotion Rules
- * As shown in sequence diagram: (infrastructure/cache)
+ * Source: ~/sequence-diagram/evaluate-promotion.puml line 9
+ * Source: ~/sequence-diagram/create-rule-index.puml line 8
+ * Participant: RuleCache\n(infrastructure/adapter/cache)
  *
  * Store into local in-memory:
  *   ruleIndex.productRuleMap
@@ -24,9 +28,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * Available for Evaluate() instantly
  */
 @Component
-public class RuleIndexCache {
+public class RuleCache {
 
-    private static final Logger logger = LoggerFactory.getLogger(RuleIndexCache.class);
+    private static final Logger logger = LoggerFactory.getLogger(RuleCache.class);
 
     private final AtomicReference<RuleIndex> ruleIndexRef = new AtomicReference<>();
     private final Map<Long, EvaluatePromotionRule> evaluatePromotionRules = new ConcurrentHashMap<>();
@@ -74,6 +78,27 @@ public class RuleIndexCache {
      */
     public EvaluatePromotionRule getEvaluatePromotionRule(Long ruleId) {
         return evaluatePromotionRules.get(ruleId);
+    }
+
+    /**
+     * Find rule IDs by SKU
+     * Source: ~/sequence-diagram/evaluate-promotion.puml line 40
+     */
+    public List<Long> findRuleIdsBySku(String sku) {
+        RuleIndex ruleIndex = getRuleIndex();
+        return List.copyOf(ruleIndex.getProductRuleMap().getOrDefault(sku, Set.of()));
+    }
+
+    /**
+     * Find rule IDs by payment method
+     * Source: ~/sequence-diagram/evaluate-promotion.puml line 43
+     */
+    public List<Long> findRuleIdsByPaymentMethod(String paymentMethod) {
+        if (paymentMethod == null) {
+            return List.of();
+        }
+        RuleIndex ruleIndex = getRuleIndex();
+        return List.copyOf(ruleIndex.getPaymentRuleMap().getOrDefault(paymentMethod, Set.of()));
     }
 
     /**

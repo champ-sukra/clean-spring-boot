@@ -75,13 +75,9 @@ activate RuleDomainService
 loop for each activeRule in activeRules
     RuleDomainService -> RuleDomainService: transformToEvaluateRule(activeRule, conditions, actions)
     note right of RuleDomainService
-    - ruleId: int
-    - priority: int
-    - endDate: datetime
-    - conditions: []PromotionCondition
-    - actions: []PromotionAction
-    - quota_used: int
-    - quota: Quota
+    source: ~/epic.md
+    - **Condition Examples**
+    - **In-Memory Rule Detail Structure for Evaluation Engine**
     end note
 end
 

@@ -304,7 +304,7 @@ Controllers inject services directly:
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
-    
+
     @PostMapping("/api/v1/orders")
     public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderCreateRequest request) {
         return ResponseEntity.ok(orderService.createOrder(request));
@@ -419,7 +419,7 @@ public class PaymentGatewayAdapter implements PaymentGatewayPort {
 
 ### 7.3 Integration Tests
 * Use Spring Boot Test + Testcontainers
-* Test full flow:  
+* Test full flow:
   HTTP → Controller → Service → Out Port → Adapter → DB/API
 
 ### 7.4 Contract / API Tests
@@ -543,13 +543,13 @@ Before committing code:
 ## 10. 🔚 Summary Principles
 
 1. **Sequence diagrams are the source of truth** → Always implement EXACTLY what the diagram shows.
-2. **Folder paths are mandatory** → Use the exact paths specified in diagram participants.  
-3. **Business first** → Domain models express core business logic.  
-4. **Framework as detail** → Spring, JPA, REST are replaceable adapters.  
-5. **Ports define contracts** → Adapters fulfill them.  
-6. **Orchestration lives in application/services** → Not in controllers or adapters.  
-7. **Explicit mapping** → Domain, DTO, and Entity never cross boundaries.  
-8. **External API calls always go through port/out** → never directly from inbound.  
+2. **Folder paths are mandatory** → Use the exact paths specified in diagram participants.
+3. **Business first** → Domain models express core business logic.
+4. **Framework as detail** → Spring, JPA, REST are replaceable adapters.
+5. **Ports define contracts** → Adapters fulfill them.
+6. **Orchestration lives in application/services** → Not in controllers or adapters.
+7. **Explicit mapping** → Domain, DTO, and Entity never cross boundaries.
+8. **External API calls always go through port/out** → never directly from inbound.
 9. **Test the core** → Domain and use cases are the highest-value tests.
 
 ---
