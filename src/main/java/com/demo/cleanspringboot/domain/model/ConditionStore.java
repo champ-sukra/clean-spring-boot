@@ -4,16 +4,20 @@ import java.util.List;
 /**
  * Domain model for EvaluationCondition
  * Source: ~/epic.md -- **In-Memory Rule Detail Structure for Evaluation Engine**
+ * Source: ~/sequence-diagram/create-rule-index.puml line 79-80
  *
  * EvaluationCondition fields:
- * - type: ENUM - Condition type (QUANTITY, AMOUNT, PRODUCT, CATEGORY, PAYMENT_METHOD,
- *                 CUSTOMER_SEGMENT, FIRST_ORDER, CHANNEL, BRAND, SHIPPING_METHOD)
+ * - type: ENUM - Condition type (PRODUCT, QUANTITY, AMOUNT, CATEGORY, TOTAL_BILL,
+ *                 PAYMENT_METHOD, CUSTOMER_SEGMENT, FIRST_ORDER, CHANNEL, BRAND, SHIPPING_METHOD)
  * - buyQty: INT - Required quantity to qualify (QUANTITY condition only)
- * - minAmount: DECIMAL - Required minimum spend (AMOUNT condition only)
- * - productCodes: List<String> - Eligible product codes (PRODUCT condition)
- * - categoryCodes: List<String> - Eligible category codes (CATEGORY condition)
- * - paymentMethods: List<String> - Required payment methods
- * - segment: String - Customer segment (e.g., FIRST_ORDER)
+ * - minAmount: DECIMAL - Required minimum spend (TOTAL_BILL, AMOUNT condition only)
+ * - productCodes: List<String> - Eligible product codes (PRODUCT, QUANTITY, AMOUNT conditions)
+ * - categoryCodes: List<String> - Eligible category codes (CATEGORY, QUANTITY, AMOUNT conditions)
+ * - paymentMethods: List<String> - Required payment methods (PAYMENT_METHOD condition)
+ * - segment: String - Customer segment (CUSTOMER_SEGMENT condition, e.g., FIRST_ORDER)
+ * - shippingMethods: List<String> - Required shipping methods (SHIPPING_METHOD condition)
+ * - channels: List<String> - Required channels (CHANNEL condition, e.g., MOBILE, WEB)
+ * - brands: List<String> - Required brands (BRAND condition)
  */
 public class ConditionStore {
     private ConditionType type;
@@ -23,6 +27,9 @@ public class ConditionStore {
     private List<String> categoryCodes;
     private List<String> paymentMethods;
     private String segment;
+    private List<String> shippingMethods;
+    private List<String> channels;
+    private List<String> brands;
     public ConditionStore() {
     }
     public ConditionType getType() {
@@ -66,5 +73,23 @@ public class ConditionStore {
     }
     public void setSegment(String segment) {
         this.segment = segment;
+    }
+    public List<String> getShippingMethods() {
+        return shippingMethods;
+    }
+    public void setShippingMethods(List<String> shippingMethods) {
+        this.shippingMethods = shippingMethods;
+    }
+    public List<String> getChannels() {
+        return channels;
+    }
+    public void setChannels(List<String> channels) {
+        this.channels = channels;
+    }
+    public List<String> getBrands() {
+        return brands;
+    }
+    public void setBrands(List<String> brands) {
+        this.brands = brands;
     }
 }

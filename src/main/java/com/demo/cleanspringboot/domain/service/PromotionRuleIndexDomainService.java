@@ -53,48 +53,98 @@ public class PromotionRuleIndexDomainService {
 
     /**
      * Extract rule index from conditions
-     * Constructs in-memory maps for:
-     * - product: "P-1001" → [1,5]
+     * Source: ~/epic.md -- **Sample Records → `promotion_condition`**
+     * Source: ~/sequence-diagram/create-rule-index.puml line 36
+     *
+     * Constructs in-memory maps:
+     * - product: "P-1001" → [1,5], "P-1002" → [3]
      * - category: "C-2001" → [2,7]
-     * - segment: FIRST_ORDER → [8]
-     * - payment: VISA → [4]
+     * - segment: FIRST_ORDER → [8], LOYALTY → [11]
+     * - payment: VISA → [4], COD → [6]
+     * - global: "TOTAL_BILL" → [15, 20]
      */
     private void extractRuleIndex(RuleIndex ruleIndex, Long ruleId, List<PromotionConditionEntity> conditions) {
         for (PromotionConditionEntity condition : conditions) {
             String conditionType = condition.getConditionType();
 
-            // Extract product IDs (as Strings)
-            if (condition.getIncludeProductIds() != null) {
-                List<String> productIds = parseJsonToStringList(condition.getIncludeProductIds());
-                for (String productId : productIds) {
-                    ruleIndex.addProductRule(productId, ruleId);
-                }
+            // Extract based on condition type according to epic.md Sample Records
+            switch (conditionType) {
+                case "PRODUCT":
+                    // PRODUCT: only has include_product_ids
+                    if (condition.getIncludeProductIds() != null) {
+                        List<String> productIds = parseJsonToStringList(condition.getIncludeProductIds());
+                        for (String productId : productIds) {
+                            ruleIndex.addProductRule(productId, ruleId);
+                        }
+                    }
+                    break;
+
+                case "CATEGORY":
+                    // CATEGORY: only has include_category_ids
+                    if (condition.getIncludeCategoryIds() != null) {
+                        List<String> categoryIds = parseJsonToStringList(condition.getIncludeCategoryIds());
+                        for (String categoryId : categoryIds) {
+                            ruleIndex.addCategoryRule(categoryId, ruleId);
+                        }
+                    }
+                    break;
+
+                case "QUANTITY":
+                case "AMOUNT":
+                    // QUANTITY/AMOUNT: have both include_product_ids and include_category_ids
+                    if (condition.getIncludeProductIds() != null) {
+                        List<String> productIds = parseJsonToStringList(condition.getIncludeProductIds());
+                        for (String productId : productIds) {
+                            ruleIndex.addProductRule(productId, ruleId);
+                        }
+                    }
+                    if (condition.getIncludeCategoryIds() != null) {
+                        List<String> categoryIds = parseJsonToStringList(condition.getIncludeCategoryIds());
+                        for (String categoryId : categoryIds) {
+                            ruleIndex.addCategoryRule(categoryId, ruleId);
+                        }
+                    }
+                    break;
+
+                case "CUSTOMER_SEGMENT":
+                    // CUSTOMER_SEGMENT: has attributes.segment
+                    if (condition.getAttributes() != null) {
+                        Map<String, Object> attributes = parseJsonToMap(condition.getAttributes());
+                        String segment = (String) attributes.get("segment");
+                        if (segment != null) {
+                            ruleIndex.addSegmentRule(segment, ruleId);
+                        }
+                    }
+                    break;
+
+                case "PAYMENT_METHOD":
+                    // PAYMENT_METHOD: has attributes.payment_methods
+                    if (condition.getAttributes() != null) {
+                        Map<String, Object> attributes = parseJsonToMap(condition.getAttributes());
+                        Object pm = attributes.get("payment_methods");
+                        if (pm instanceof List) {
+                            List<String> paymentMethods = (List<String>) pm;
+                            for (String paymentMethod : paymentMethods) {
+                                ruleIndex.addPaymentRule(paymentMethod, ruleId);
+                            }
+                        }
+                    }
+                    break;
+
+                case "TOTAL_BILL":
+                    // TOTAL_BILL: no indexing needed for products/categories, only global
+                    break;
+
+                default:
+                    // Other condition types (SHIPPING_METHOD, CHANNEL, BRAND, etc.)
+                    logger.debug("Condition type {} not indexed for products/categories", conditionType);
+                    break;
             }
 
-            // Extract category IDs (as Strings)
-            if (condition.getIncludeCategoryIds() != null) {
-                List<String> categoryIds = parseJsonToStringList(condition.getIncludeCategoryIds());
-                for (String categoryId : categoryIds) {
-                    ruleIndex.addCategoryRule(categoryId, ruleId);
-                }
-            }
-
-            // Extract customer segments
-            if ("CUSTOMER_SEGMENT".equals(conditionType) && condition.getAttributes() != null) {
-                Map<String, Object> attributes = parseJsonToMap(condition.getAttributes());
-                String segment = (String) attributes.get("segment");
-                if (segment != null) {
-                    ruleIndex.addSegmentRule(segment, ruleId);
-                }
-            }
-
-            // Extract payment methods
-            if ("PAYMENT_METHOD".equals(conditionType) && condition.getAttributes() != null) {
-                Map<String, Object> attributes = parseJsonToMap(condition.getAttributes());
-                String paymentMethod = (String) attributes.get("payment_method");
-                if (paymentMethod != null) {
-                    ruleIndex.addPaymentRule(paymentMethod, ruleId);
-                }
+            // Extract global condition types (all conditions)
+            // Index all condition types for fast lookup during evaluation
+            if (conditionType != null && !conditionType.isEmpty()) {
+                ruleIndex.addGlobalRule(conditionType, ruleId);
             }
         }
     }
@@ -123,6 +173,7 @@ public class PromotionRuleIndexDomainService {
         logger.info("  - Categories indexed: {}", ruleIndex.getCategoryRuleMap().size());
         logger.info("  - Segments indexed: {}", ruleIndex.getSegmentRuleMap().size());
         logger.info("  - Payment methods indexed: {}", ruleIndex.getPaymentRuleMap().size());
+        logger.info("  - Global condition types indexed: {}", ruleIndex.getGlobalRuleMap().size());
     }
 }
 

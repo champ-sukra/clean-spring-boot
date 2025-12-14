@@ -31,36 +31,45 @@ public class PromotionRuleDomainService {
     }
 
     /**
-     * Get promotion rules details and transform to EvaluatePromotionRule
-     * Returns Map<RuleId, EvaluatePromotionRule>
+     * Build evaluate rules from active rules
+     * Source: ~/sequence-diagram/create-rule-index.puml line 72-82
+     * Source: ~/epic.md - In-Memory Rule Detail Structure for Evaluation Engine
+     * ConditionType including PRODUCT, QUANTITY, AMOUNT, CATEGORY, TOTAL_BILL,
+     * PAYMENT_METHOD, CUSTOMER_SEGMENT, FIRST_ORDER, CHANNEL, BRAND, SHIPPING_METHOD
+     * Returns Map<ruleId, EvaluatePromotionRule>
      */
-    public Map<Long, EvaluatePromotionRule> getPromotionRulesDetails(
+    public Map<Long, EvaluatePromotionRule> buildEvaluateRules(
             List<PromotionRuleEntity> activeRules,
             Map<Long, List<PromotionConditionEntity>> conditionsMap,
             Map<Long, List<PromotionActionEntity>> actionsMap) {
 
-        logger.info("Transforming {} rules to EvaluatePromotionRule", activeRules.size());
+        logger.info("Building evaluate rules from {} active rules", activeRules.size());
 
         Map<Long, EvaluatePromotionRule> evaluateRulesMap = new HashMap<>();
 
+        // Loop for each activeRule (sequence diagram line 74-79)
         for (PromotionRuleEntity activeRule : activeRules) {
             Long ruleId = activeRule.getId();
             List<PromotionConditionEntity> conditions = conditionsMap.getOrDefault(ruleId, List.of());
             List<PromotionActionEntity> actions = actionsMap.getOrDefault(ruleId, List.of());
 
+            // transformToEvaluateRule (sequence diagram line 75)
             EvaluatePromotionRule evaluateRule = transformToEvaluateRule(activeRule, conditions, actions);
             evaluateRulesMap.put(ruleId, evaluateRule);
         }
 
-        logger.info("Transformation completed for {} rules", evaluateRulesMap.size());
+        logger.info("Build completed. {} evaluate rules created", evaluateRulesMap.size());
         return evaluateRulesMap;
     }
 
     /**
      * Transform to EvaluatePromotionRule
+     * Source: ~/sequence-diagram/create-rule-index.puml line 75-80
      * Source: ~/epic.md
-     * - **Condition Examples**
      * - **In-Memory Rule Detail Structure for Evaluation Engine**
+     * - ConditionType including QUANTITY, AMOUNT, TOTAL_BILL, PRODUCT, CATEGORY,
+     *   PAYMENT_METHOD, CUSTOMER_SEGMENT, FIRST_ORDER, CHANNEL, BRAND, SHIPPING_METHOD
+     * - **Sample Records → promotion_condition**
      *
      * Fields:
      * - ruleId: INT
@@ -110,25 +119,31 @@ public class PromotionRuleDomainService {
         return evaluateRule;
     }
 
+    /**
+     * Transform PromotionConditionEntity to ConditionStore
+     * Source: ~/epic.md - Sample Records → promotion_condition
+     * Handles all condition types: PRODUCT, QUANTITY, AMOUNT, CATEGORY, TOTAL_BILL,
+     * PAYMENT_METHOD, CUSTOMER_SEGMENT, SHIPPING_METHOD, CHANNEL, BRAND
+     */
     private ConditionStore transformToConditionStore(PromotionConditionEntity entity) {
         ConditionStore store = new ConditionStore();
 
         // Parse condition type from String to enum
-        store.setType(ConditionType.fromString(entity.getConditionType()));
+        ConditionType type = ConditionType.fromString(entity.getConditionType());
 
         // Parse threshold_value based on condition type
-        // Source: ~/epic.md -- Condition Examples table
+        // Source: ~/epic.md -- Sample Records → promotion_condition
         // QUANTITY: threshold_value = 100 (direct number)
         // AMOUNT: threshold_value = 1000 (direct number)
-        // PAYMENT_METHOD, SEGMENT: threshold_value = null
+        // TOTAL_BILL: threshold_value = 1000 (direct number)
+        // PRODUCT, CATEGORY, PAYMENT_METHOD, CUSTOMER_SEGMENT: threshold_value = null
         if (entity.getThresholdValue() != null) {
             try {
-                Double thresholdValue = Double.parseDouble(entity.getThresholdValue().toString());
-                ConditionType type = store.getType();
+                Double thresholdValue = Double.parseDouble(entity.getThresholdValue());
 
                 if (type == ConditionType.QUANTITY) {
                     store.setBuyQty(thresholdValue.intValue());
-                } else if (type == ConditionType.AMOUNT) {
+                } else if (type == ConditionType.AMOUNT || type == ConditionType.TOTAL_BILL) {
                     store.setMinAmount(thresholdValue);
                 }
             } catch (Exception e) {
@@ -136,24 +151,33 @@ public class PromotionRuleDomainService {
             }
         }
 
-        // Parse product codes
+        // Parse product codes - used by PRODUCT, QUANTITY, AMOUNT conditions
+        // Source: ~/epic.md - EvaluationCondition: productCodes for PRODUCT, QUANTITY, AMOUNT
         if (entity.getIncludeProductIds() != null) {
             store.setProductCodes(parseJsonToStringList(entity.getIncludeProductIds()));
         }
 
-        // Parse category codes
+        // Parse category codes - used by CATEGORY, QUANTITY, AMOUNT conditions
+        // Source: ~/epic.md - EvaluationCondition: categoryCodes for CATEGORY, QUANTITY, AMOUNT
         if (entity.getIncludeCategoryIds() != null) {
             store.setCategoryCodes(parseJsonToStringList(entity.getIncludeCategoryIds()));
         }
 
+        // Set the condition type
+        store.setType(type);
+
         // Parse attributes based on condition type
-        // Source: ~/epic.md -- Condition Examples table
+        // Source: ~/epic.md -- Sample Records → promotion_condition
         // PAYMENT_METHOD: attributes = {"payment_methods": ["CREDIT_CARD", "DEBIT_CARD"]}
-        // SEGMENT: attributes = {"segment": "FIRST_ORDER"}
+        // CUSTOMER_SEGMENT: attributes = {"segment": "FIRST_ORDER"}
+        // SHIPPING_METHOD: attributes = {"shipping_methods": ["EXPRESS", "STANDARD"]}
+        // CHANNEL: attributes = {"channels": ["MOBILE", "WEB"]}
+        // BRAND: attributes = {"brands": ["BRAND_A", "BRAND_B"]}
         if (entity.getAttributes() != null) {
             try {
                 Map<String, Object> attributes = parseJsonToMap(entity.getAttributes());
 
+                // Handle payment methods
                 if (attributes.containsKey("payment_methods")) {
                     Object pm = attributes.get("payment_methods");
                     if (pm instanceof List) {
@@ -161,10 +185,35 @@ public class PromotionRuleDomainService {
                     }
                 }
 
+                // Handle customer segment
                 if (attributes.containsKey("segment")) {
                     Object seg = attributes.get("segment");
                     if (seg instanceof String) {
                         store.setSegment((String) seg);
+                    }
+                }
+
+                // Handle shipping methods
+                if (attributes.containsKey("shipping_methods")) {
+                    Object sm = attributes.get("shipping_methods");
+                    if (sm instanceof List) {
+                        store.setShippingMethods((List<String>) sm);
+                    }
+                }
+
+                // Handle channels
+                if (attributes.containsKey("channels")) {
+                    Object ch = attributes.get("channels");
+                    if (ch instanceof List) {
+                        store.setChannels((List<String>) ch);
+                    }
+                }
+
+                // Handle brands
+                if (attributes.containsKey("brands")) {
+                    Object br = attributes.get("brands");
+                    if (br instanceof List) {
+                        store.setBrands((List<String>) br);
                     }
                 }
             } catch (Exception e) {
@@ -232,63 +281,5 @@ public class PromotionRuleDomainService {
             logger.warn("Failed to parse JSON to Map: {}", json, e);
             return Map.of();
         }
-    }
-
-    /**
-     * Evaluate eligible rules against cart items
-     * Source: ~/sequence-diagram/evaluate-promotion.puml line 55-63
-     * Returns: List<EvaluatePromotionRule>
-     */
-    public List<EvaluatePromotionRule> evaluateEligibleRules(
-            List<EvaluatePromotionRequest.CartItem> items,
-            List<EvaluatePromotionRule> evaluateRules) {
-
-        logger.info("Evaluating {} rules against {} cart items", evaluateRules.size(), items.size());
-
-        List<EvaluatePromotionRule> eligibleRules = evaluateRules.stream()
-                .filter(rule -> applyCondition(ConditionType.QUANTITY, items, rule))
-                .collect(Collectors.toList());
-
-        logger.info("Evaluation completed. {} eligible rules found", eligibleRules.size());
-        return eligibleRules;
-    }
-
-    /**
-     * Apply condition check for a rule
-     * Source: ~/sequence-diagram/evaluate-promotion.puml line 56
-     * Returns: true if rule is eligible, false otherwise
-     */
-    private boolean applyCondition(
-            ConditionType conditionType,
-            List<EvaluatePromotionRequest.CartItem> items,
-            EvaluatePromotionRule rule) {
-
-        if (conditionType != ConditionType.QUANTITY) {
-            return false;
-        }
-
-        // Check QUANTITY conditions
-        for (ConditionStore condition : rule.getConditions()) {
-            if (condition.getType() == ConditionType.QUANTITY) {
-                Integer requiredQty = condition.getBuyQty();
-                if (requiredQty == null) {
-                    continue;
-                }
-
-                // Sum quantities from cart items matching product codes
-                int totalQty = items.stream()
-                        .filter(item -> condition.getProductCodes() != null &&
-                                       condition.getProductCodes().contains(item.getProductId()))
-                        .mapToInt(EvaluatePromotionRequest.CartItem::getQuantity)
-                        .sum();
-
-                if (totalQty >= requiredQty) {
-                    return true;
-                }
-            }
-        }
-
-        // If no QUANTITY condition found or not met, not eligible
-        return false;
     }
 }

@@ -66,24 +66,32 @@ Task: [API][SUCCESS] - Evaluate Eligible Promotions
 - Returns list of eligible rule IDs based on:
   - Active rules (status=2)
   - Rules within valid date range (start_date ≤ now ≤ end_date)
+  - Stacking rules from promotion_stacking table if multiple rules evaluated)
   - Matching conditions:
     - QUANTITY: cart items meet minimum quantity threshold (as shown in sequence diagram line 57)
+    - AMOUNT: calculated total bill; sum of all(item.quantity * item.price); meets minimum threshold_value)
+
 - Evaluation steps (per sequence diagram):
-  1. Lookup rule IDs by SKU from cache (loop for each cart item)
-  2. Filter rule IDs (by current time, deduplicate)
-  3. Get EvaluatePromotionRule from cache for each filtered rule ID
-  4. Apply conditions (QUANTITY) via DomainService.evaluateEligibleRules
+  1. Lookup rule IDs by SKU from cache (loop for each cart item) - line 38-41
+  2. Lookup rule IDs by payment method from cache - line 42-43
+  3. Arrange rule IDs: filter out by current time, deduplicate, sort by priority ASC - line 45-51
+  4. Domain Service evaluates eligible rules - line 54
+     - Loop for each ruleId in sortedRuleIds - line 56
+     - Get EvaluatePromotionRule from cache - line 57-58
+     - Apply conditions
+       - PRODUCT: Check if cart items contains one from productCode list
+       - CATEGORY: Check if cart items contains one from categoryCode list
+       - QUANTITY: Check if cart items meet minimum quantity threshold using productCode or categoryCode list
+       - AMOUNT: Check if cart items meet minimum amount threshold using productCode or categoryCode list
+       - PAYMENT_METHOD: Check if payment method matches
+       - TOTAL_BILL Calculate total bill = sum of all(item.quantity * item.price) if total meets minimum threshold
 - Performance target: < 10ms per rule
 
 ---
 
-[//]: # (    - AMOUNT: calculated total &#40;sum of item.quantity * item.price&#41; meets minimum threshold_value)
-[//]: # (    - CATEGORY: cart items match include_category_ids &#40;exclude exclude_product_ids&#41;)
 [//]: # (    - CUSTOMER_SEGMENT: customerId matches segment criteria &#40;if applicable&#41;)
-[//]: # (    - PAYMENT_METHOD: paymentMethod matches condition criteria &#40;for full mode&#41;)
 [//]: # (    - CHANNEL: applicable channel criteria)
 [//]: # (  - Available quota &#40;quota not exhausted&#41;)
-[//]: # (  - Stacking rules from promotion_stacking table &#40;if multiple rules evaluated&#41;)
 [//]: # (- Evaluation mode determines depth:)
 [//]: # (  - `light`: Product SKU, category, quantity, amount conditions only)
 [//]: # (  - `medium`: Same as light with additional cart context)

@@ -6,8 +6,8 @@ title EvaluatePromotionRuleDetail POST /api/v1/promotion-rules/evaluate
 actor Client
 participant "PromotionEvaluationController\n(infrastructure/adapter/in/web)" as Controller
 participant "PromotionEvaluationService\n(application/service)" as Service
+participant "RuleEvaluationDomainService\n(domain/service)" as DomainService
 participant "RuleCache\n(infrastructure/adapter/cache)" as Cache
-participant "PromotionRuleDomainService\n(domain/service)" as DomainService
 
 Client -> Controller
 activate Controller
@@ -34,32 +34,50 @@ activate Controller
 Controller -> Service: evaluatePromotionRules(carts, paymentMethod)
 activate Service
 
-'Service -> DomainService: evaluatePromotionRules(carts, paymentMethod)
-'activate DomainService
-
 loop for each cart in carts
-    Service -> Cache: findRuleIdsBySku(cart.sku)
+    Service -> Cache: findRuleIdsByProductId(cart.productId)
     Service <-- Cache: List<ruleIds>
+
+    Service -> Cache: findRuleIdsByCategoryId(cart.categoryId)
+        Service <-- Cache: List<ruleIds>
 end
 Service -> Cache: findRuleIdsByPaymentMethod(paymentMethod)
 Service <-- Cache: List<ruleIds>
 
-Service -> Service: filterRuleIds(mergedRuleIds)
+Service -> Cache: findRuleIdsByCondition(ConditionType.TOTAL_BILL) // from globalRuleMap
+Service <-- Cache: List<ruleIds>
+
+Service -> Service: arrangeRuleIds(mergedRuleIds)
 note right of Service
-- filter by current time (end)
+- filter out by current time (end)
 - deduplicate ruleIds
+- sort by priority ASC by rule.priority
 end note
-loop for each ruleId in filteredRuleIds
-    Service -> Cache: getEvaluatePromotionRule(filteredRuleIds)
-    Service <-- Cache: EvaluatePromotionRule
+
+Service -> DomainService: evaluateEligibleRules(carts, sortedRules, paymentMethod)
+
+loop for each ruleId in sortedRuleIds
+    DomainService -> Cache: getEvaluatePromotionRule(ruleId)
+    DomainService <-- Cache: EvaluatePromotionRule
+
+    DomainService -> DomainService: applyCondition(rule.conditions, carts, evaluateRules)
+    note right of DomainService
+    switch
+    PRODUCT: Check if cart items contains one from productCode list
+    CATEGORY: Check if cart items contains one from categoryCode list
+    QUANTITY: Check if cart items meet minimum quantity threshold using productCode or categoryCode list
+    AMOUNT: Check if cart items meet minimum amount threshold using productCode or categoryCode list
+    PAYMENT_METHOD: Check if payment method matches
+    TOTAL_BILL Calculate total bill = sum of all(item.quantity * item.price) if total meets minimum threshold
+    end note
+
 end
 
-Service -> DomainService: evaluateEligibleRules(carts, evaluateRules)
-DomainService -> DomainService: applyCondition(ConditionType.QUANTITY, carts, evaluateRules)
-note right of DomainService
-'- filter by quota
-'- sortEvaluatePromotionRulesByPriority
-end note
+'DomainService -> DomainService: filterByStacking(eligibleRules)
+'note right of DomainService
+'Apply stacking rules from promotion_stacking table
+'Filter out non-stackable combinations
+'end note
 Service <-- DomainService: List<EvaluatePromotionRule>
 
 

@@ -15,17 +15,19 @@ DELETE FROM promotion_action WHERE rule_id IN (10, 15, 23, 99);
 DELETE FROM promotion_condition WHERE rule_id IN (10, 15, 23, 99);
 DELETE FROM promotion_rules WHERE id IN (10, 15, 23, 99);
 
--- Delete sample rules by name (Rules 1-5) using separate statements
+-- Delete sample rules by name (Rules 1-7) using separate statements
 SET @rule_id_1 = (SELECT id FROM promotion_rules WHERE rule_name = 'Buy 2 Get 1 Free - Electronics' LIMIT 1);
 SET @rule_id_2 = (SELECT id FROM promotion_rules WHERE rule_name = 'Spend 1000 Get 10% Off' LIMIT 1);
 SET @rule_id_3 = (SELECT id FROM promotion_rules WHERE rule_name = 'Fashion Category 20% Off' LIMIT 1);
 SET @rule_id_4 = (SELECT id FROM promotion_rules WHERE rule_name = 'Credit Card 5% Cashback' LIMIT 1);
 SET @rule_id_5 = (SELECT id FROM promotion_rules WHERE rule_name = 'First Order 100 Baht Off' LIMIT 1);
+SET @rule_id_6 = (SELECT id FROM promotion_rules WHERE rule_name = 'Spend 2000 Get 15% Off' LIMIT 1);
+SET @rule_id_7 = (SELECT id FROM promotion_rules WHERE rule_name = 'Spend 3000 Get Free Item' LIMIT 1);
 
-DELETE FROM promotion_stacking WHERE rule_id IN (@rule_id_1, @rule_id_2, @rule_id_3, @rule_id_4, @rule_id_5);
-DELETE FROM promotion_action WHERE rule_id IN (@rule_id_1, @rule_id_2, @rule_id_3, @rule_id_4, @rule_id_5);
-DELETE FROM promotion_condition WHERE rule_id IN (@rule_id_1, @rule_id_2, @rule_id_3, @rule_id_4, @rule_id_5);
-DELETE FROM promotion_rules WHERE id IN (@rule_id_1, @rule_id_2, @rule_id_3, @rule_id_4, @rule_id_5);
+DELETE FROM promotion_stacking WHERE rule_id IN (@rule_id_1, @rule_id_2, @rule_id_3, @rule_id_4, @rule_id_5, @rule_id_6, @rule_id_7);
+DELETE FROM promotion_action WHERE rule_id IN (@rule_id_1, @rule_id_2, @rule_id_3, @rule_id_4, @rule_id_5, @rule_id_6, @rule_id_7);
+DELETE FROM promotion_condition WHERE rule_id IN (@rule_id_1, @rule_id_2, @rule_id_3, @rule_id_4, @rule_id_5, @rule_id_6, @rule_id_7);
+DELETE FROM promotion_rules WHERE id IN (@rule_id_1, @rule_id_2, @rule_id_3, @rule_id_4, @rule_id_5, @rule_id_6, @rule_id_7);
 
 -- ============================================================
 -- Sample Promotion Rules
@@ -61,6 +63,18 @@ SELECT id, 'First Order 100 Baht Off', '2025-11-01 00:00:00', '2025-12-31 23:59:
        '{"type":"PER_CUSTOMER","limit":1}', 0
 FROM promotion_templates WHERE code = 'TPL_FIRST_ORDER';
 
+-- Rule 6: Spend 2000 Get 15% Off (Total Bill Discount)
+INSERT INTO promotion_rules (template_id, rule_name, start_date, end_date, status, priority, quota, quota_used)
+SELECT id, 'Spend 2000 Get 15% Off', '2025-12-01 00:00:00', '2025-12-31 23:59:59', 2, 25,
+       '{"type":"GLOBAL","limit":500}', 0
+FROM promotion_templates WHERE code = 'TPL_TOTAL_BILL_DISCOUNT';
+
+-- Rule 7: Spend 3000 Get Free Item (Total Bill Get Free Item)
+INSERT INTO promotion_rules (template_id, rule_name, start_date, end_date, status, priority, quota, quota_used)
+SELECT id, 'Spend 3000 Get Free Item', '2025-12-01 00:00:00', '2025-12-31 23:59:59', 2, 28,
+       '{"type":"GLOBAL","limit":300}', 0
+FROM promotion_templates WHERE code = 'TPL_TOTAL_BILL_GET_FREE_ITEM';
+
 -- ============================================================
 -- Sample Promotion Conditions
 -- ============================================================
@@ -89,6 +103,16 @@ FROM promotion_rules WHERE rule_name = 'Credit Card 5% Cashback';
 INSERT INTO promotion_condition (rule_id, condition_type, threshold_value, attributes)
 SELECT id, 'CUSTOMER_SEGMENT', 0, '{"segment":"FIRST_ORDER"}'
 FROM promotion_rules WHERE rule_name = 'First Order 100 Baht Off';
+
+-- Condition for Rule 6: Total bill minimum 2000
+INSERT INTO promotion_condition (rule_id, condition_type, threshold_value, attributes)
+SELECT id, 'TOTAL_BILL', 2000.00, '{"min_amount":2000}'
+FROM promotion_rules WHERE rule_name = 'Spend 2000 Get 15% Off';
+
+-- Condition for Rule 7: Total bill minimum 3000
+INSERT INTO promotion_condition (rule_id, condition_type, threshold_value, attributes)
+SELECT id, 'TOTAL_BILL', 3000.00, '{"min_amount":3000}'
+FROM promotion_rules WHERE rule_name = 'Spend 3000 Get Free Item';
 
 -- ============================================================
 -- Sample Promotion Actions
@@ -119,6 +143,16 @@ INSERT INTO promotion_action (rule_id, action_type, discount_value, attributes)
 SELECT id, 'FIXED_PRICE', 100.00, '{"discount_amount":100}'
 FROM promotion_rules WHERE rule_name = 'First Order 100 Baht Off';
 
+-- Action for Rule 6: 15% discount
+INSERT INTO promotion_action (rule_id, action_type, discount_value, attributes)
+SELECT id, 'DISCOUNT_PERCENT', 15.00, '{"max_discount":1000}'
+FROM promotion_rules WHERE rule_name = 'Spend 2000 Get 15% Off';
+
+-- Action for Rule 7: Free item
+INSERT INTO promotion_action (rule_id, action_type, discount_value, reward_items, attributes)
+SELECT id, 'FREE_ITEM', 0, '["GIFT001"]', '{"reward_qty":1}'
+FROM promotion_rules WHERE rule_name = 'Spend 3000 Get Free Item';
+
 -- ============================================================
 -- Sample Promotion Stacking Rules
 -- ============================================================
@@ -147,6 +181,16 @@ FROM promotion_rules WHERE rule_name = 'Credit Card 5% Cashback';
 INSERT INTO promotion_stacking (rule_id, stackable_with, exclusive_with, combinable)
 SELECT id, '[]', '["TPL_TOTAL_BILL_DISCOUNT"]', FALSE
 FROM promotion_rules WHERE rule_name = 'First Order 100 Baht Off';
+
+-- Stacking for Rule 6: Can stack with payment method
+INSERT INTO promotion_stacking (rule_id, stackable_with, exclusive_with, combinable)
+SELECT id, '["TPL_PAYMENT_METHOD"]', '["TPL_BUY_X_GET_Y","TPL_FIRST_ORDER"]', TRUE
+FROM promotion_rules WHERE rule_name = 'Spend 2000 Get 15% Off';
+
+-- Stacking for Rule 7: Can stack with payment method
+INSERT INTO promotion_stacking (rule_id, stackable_with, exclusive_with, combinable)
+SELECT id, '["TPL_PAYMENT_METHOD"]', '["TPL_BUY_X_GET_Y","TPL_FIRST_ORDER","TPL_TOTAL_BILL_DISCOUNT"]', TRUE
+FROM promotion_rules WHERE rule_name = 'Spend 3000 Get Free Item';
 
 -- ============================================================
 -- Test Data for Evaluation Endpoint (engine-evaluate.md)

@@ -12,12 +12,14 @@ public class RuleIndex {
     private final Map<String, Set<Long>> categoryRuleMap;
     private final Map<String, Set<Long>> segmentRuleMap;
     private final Map<String, Set<Long>> paymentRuleMap;
+    private final Map<String, Set<Long>> globalRuleMap;  // global: "TOTAL_BILL" → [15, 20]
 
     public RuleIndex() {
         this.productRuleMap = new HashMap<>();
         this.categoryRuleMap = new HashMap<>();
         this.segmentRuleMap = new HashMap<>();
         this.paymentRuleMap = new HashMap<>();
+        this.globalRuleMap = new HashMap<>();
     }
 
     public void addProductRule(String productId, Long ruleId) {
@@ -36,6 +38,10 @@ public class RuleIndex {
         paymentRuleMap.computeIfAbsent(paymentMethod, k -> new HashSet<>()).add(ruleId);
     }
 
+    public void addGlobalRule(String conditionType, Long ruleId) {
+        globalRuleMap.computeIfAbsent(conditionType, k -> new HashSet<>()).add(ruleId);
+    }
+
     public Set<Long> getRulesByProduct(String productId) {
         return productRuleMap.getOrDefault(productId, Collections.emptySet());
     }
@@ -50,6 +56,10 @@ public class RuleIndex {
 
     public Set<Long> getRulesByPayment(String paymentMethod) {
         return paymentRuleMap.getOrDefault(paymentMethod, Collections.emptySet());
+    }
+
+    public Set<Long> getRulesByGlobal(String conditionType) {
+        return globalRuleMap.getOrDefault(conditionType, Collections.emptySet());
     }
 
     public Map<String, Set<Long>> getProductRuleMap() {
@@ -68,11 +78,16 @@ public class RuleIndex {
         return Collections.unmodifiableMap(paymentRuleMap);
     }
 
+    public Map<String, Set<Long>> getGlobalRuleMap() {
+        return Collections.unmodifiableMap(globalRuleMap);
+    }
+
     public void clear() {
         productRuleMap.clear();
         categoryRuleMap.clear();
         segmentRuleMap.clear();
         paymentRuleMap.clear();
+        globalRuleMap.clear();
     }
 }
 

@@ -1,8 +1,8 @@
 # Promotion-Engine Capabilities EPIC
 
 **Page ID:** 640155657  
-**Last Updated:** 2025-12-07  
-**Version:** 13
+**Last Updated:** 2025-12-14  
+**Version:** 19
 
 ## Objective
 To build a promotion engine that support multiple stackable, configurable promotion templates.
@@ -70,22 +70,24 @@ To build a promotion engine that support multiple stackable, configurable promot
 |-------|------|-------------|
 | `id` | INT UNSIGNED (PK) | Unique identifier of the condition |
 | `rule_id` | INT UNSIGNED (FK → promotion_rule.id) | References the rule this condition belongs to |
-| `condition_type` | ENUM(`QUANTITY`,`AMOUNT`,`CATEGORY`,`CUSTOMER_SEGMENT`,`CHANNEL,PAYMENT_METHOD, PRODUCT`) | Type of eligibility condition |
+| `condition_type` | ENUM(`PRODUCT`, `QUANTITY`, `AMOUNT`, `CATEGORY`, `CUSTOMER_SEGMENT`, `CHANNEL`, `PAYMENT_METHOD`, `SHIPPING_METHOD`, `TOTAL_BILL`) | Type of eligibility condition |
 | `threshold_value` | DECIMAL(10,2) | Minimum required quantity or amount |
 | `include_product_ids` | JSON | List of SKUs or product groups that qualify |
 | `include_category_ids` | JSON | List of category groups that qualify |
 | `exclude_product_ids` | JSON | SKUs or groups to exclude from eligibility |
-| `attributes` | JSON | Flexible key-value metadata |
+| `attributes` | JSON | Attributes which is reusable for each conditions |
 
-**Condition Examples:**
+****Sample Records → `promotion_condition`****
 
-| Condition      | Threshold | Attribute (E.g) |
-|----------------|-----------|-----------------|
-| Product        | null | null |
-| Quantity       | 100 | null |
-| Amount         | 1000 | null |
-| Payment Method | null | `{"payment_methods": ["CREDIT_CARD", "DEBIT_CARD"]}` |
-| Segment        | null | `{"segment": "FIRST_ORDER"}` |
+| Condition | Threshold | Include ProductIds | Include CategoryIds | Attribute (E.g) |
+|-----------|-----------|-------------------|---------------------|-----------------|
+| QUANTITY | 100 | `[{sku}, {sku}]` | `[{catId}, {catId}]` | null |
+| AMOUNT | 1000 | `[{sku}, {sku}]` | `[{catId}, {catId}]` | null |
+| PAYMENT_METHOD | null | null | null | `{"payment_methods": ["CREDIT_CARD", "DEBIT_CARD"]}` |
+| CUSTOMER_SEGMENT | null | null | null | `{"segment": "FIRST_ORDER"}` |
+| PRODUCT | null | `[{sku}, {sku}]` | null | null |
+| CATEGORY | null | null | `[{catId}, {catId}]` | null |
+| TOTAL_BILL | 1000 | null | null | null |
 
 ### Table: `promotion_action`
 
@@ -94,8 +96,8 @@ To build a promotion engine that support multiple stackable, configurable promot
 | `id` | INT UNSIGNED (PK) | Unique identifier of the reward action                       |
 | `rule_id` | INT UNSIGNED (FK → promotion_rule.id) | References the rule this action belongs to                   |
 | `action_type` | ENUM(`DISCOUNT_PERCENT`,`FIXED_PRICE`,`FREE_ITEM`,`FREE_SHIPPING`,`CASHBACK`) | Type of reward action                                        |
-| `discount_value` | DECIMAL(10,2) | Discount amount or percentage                                |
-| `reward_items` | JSON | Reward SKUs or item list (e.g `["PROD001"]`)|
+| `discount_value` | DECIMAL(10,2) | Discount amount or percentage |
+| `reward_items` | JSON | Reward SKUs or item list |
 | `attributes` | JSON | Extra parameters (e.g. `{"reward_qty": 1,"fixed_price": 99}`) |
 
 ### Table: `promotion_stacking`
@@ -153,13 +155,14 @@ To build a promotion engine that support multiple stackable, configurable promot
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `type` | ENUM | Condition type (QUANTITY, AMOUNT, PRODUCT, CATEGORY, PAYMENT_METHOD, CUSTOMER_SEGMENT, FIRST_ORDER, CHANNEL, BRAND, SHIPPING_METHOD) |
+| `type` | ENUM | Condition type (PRODUCT, QUANTITY, AMOUNT, CATEGORY, TOTAL_BILL, PAYMENT_METHOD, SHIPPING_METHOD, CHANNEL, BRAND) |
 | `buyQty` | INT | Required quantity to qualify (QUANTITY condition only) |
-| `minAmount` | DECIMAL | Required minimum spend (AMOUNT condition only) |
-| `productCodes` | List<String> | Eligible product codes (PRODUCT condition) |
-| `categoryCodes` | List<String> | Eligible category codes (CATEGORY condition) |
+| `minAmount` | DECIMAL | Required minimum spend (TOTAL_BILL, AMOUNT condition only) |
+| `productCodes` | List<String> | Eligible product codes (PRODUCT, QUANTITY, AMOUNT conditions) |
+| `categoryCodes` | List<String> | Eligible category codes (CATEGORY, QUANTITY, AMOUNT conditions) |
 | `paymentMethods` | List<String> | Required payment methods |
 | `segment` | String | Customer segment (e.g., FIRST_ORDER) |
+
 
 **EvaluateAction**
 
@@ -234,7 +237,7 @@ To build a promotion engine that support multiple stackable, configurable promot
 
 ```
 ruleIndex:
-  product:               b
+  product:
       1001 → [ruleId1, ruleId5]
       1002 → [ruleId3]
   category:
@@ -245,6 +248,8 @@ ruleIndex:
   paymentMethod:
       "VISA" → [ruleId4]
       "COD" → [ruleId6]
+  global:
+      "TOTAL_BILL" → [ruleId15, ruleId20]
 ```
 
 ## Services Dependencies
@@ -284,9 +289,9 @@ ruleIndex:
 ## Deployment Awareness
 
 - **Require Migration from existing Promotion-Engine (Rust)**
-  - Current active promotion must work as it is
+  - Current active promotion must be work as it is
   - Pending promotion must be migrated to new service
-- **Beta / Alpha**
+- **Beta | Alpha**
   - Close group or Whitelist users must be implemented
 - **Reconfigure AWS Gateway JSON**
   - /checkout
@@ -294,3 +299,10 @@ ruleIndex:
   - /carts/detail
   - /cart/adjustment
 
+
+
+Use-Cases 
+- Return eligible rules if cart items contain one of the product codes defined in conditions
+- Return eligible rules if cart items contain one of the category codes defined in conditions
+- Return eligible rules if cart items contain one of the payment methods defined in conditions
+- Return eligible rules if cart total spend is greater than the minimum amount defined in conditions

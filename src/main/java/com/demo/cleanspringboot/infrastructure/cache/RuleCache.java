@@ -1,5 +1,6 @@
 package com.demo.cleanspringboot.infrastructure.cache;
 
+import com.demo.cleanspringboot.domain.model.ConditionType;
 import com.demo.cleanspringboot.domain.model.EvaluatePromotionRule;
 import com.demo.cleanspringboot.domain.model.RuleIndex;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * In-Memory Cache for Rule Index and Evaluate Promotion Rules
@@ -23,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *   ruleIndex.categoryRuleMap
  *   ruleIndex.segmentRuleMap
  *   ruleIndex.paymentRuleMap
+ *   ruleIndex.globalRuleMap (global: "TOTAL_BILL" → [15, 20])
  *   evaluatePromotionRules (Map<RuleId, EvaluatePromotionRule>)
  *
  * Available for Evaluate() instantly
@@ -57,13 +60,14 @@ public class RuleCache {
     }
 
     /**
-     * Save evaluate promotion rules to in-memory cache
+     * Save evaluate rules to in-memory cache
+     * Source: ~/sequence-diagram/create-rule-index.puml line 85
      */
-    public void saveEvaluatePromotionRules(Map<Long, EvaluatePromotionRule> rules) {
-        logger.info("Saving {} evaluate promotion rules to in-memory cache", rules.size());
+    public void saveEvaluateRules(Map<Long, EvaluatePromotionRule> rules) {
+        logger.info("Saving {} evaluate rules to in-memory cache", rules.size());
         evaluatePromotionRules.clear();
         evaluatePromotionRules.putAll(rules);
-        logger.info("Evaluate promotion rules saved successfully");
+        logger.info("Evaluate rules saved successfully");
     }
 
     /**
@@ -81,8 +85,8 @@ public class RuleCache {
     }
 
     /**
-     * Find rule IDs by SKU
-     * Source: ~/sequence-diagram/evaluate-promotion.puml line 40
+     * Find rule IDs by SKU (product ID)
+     * Source: ~/sequence-diagram/evaluate-promotion.puml line 38-39
      */
     public List<Long> findRuleIdsBySku(String sku) {
         RuleIndex ruleIndex = getRuleIndex();
@@ -90,8 +94,29 @@ public class RuleCache {
     }
 
     /**
+     * Find rule IDs by category ID
+     * Source: ~/sequence-diagram/evaluate-promotion.puml line 41-42
+     */
+    public List<Long> findRuleIdsByCategoryId(String categoryId) {
+        if (categoryId == null) {
+            logger.debug("Category ID is null, returning empty list");
+            return List.of();
+        }
+        RuleIndex ruleIndex = getRuleIndex();
+        Set<Long> ruleIds = ruleIndex.getCategoryRuleMap().getOrDefault(categoryId, Set.of());
+
+        logger.debug("Looking up categoryId: '{}', found {} rules", categoryId, ruleIds.size());
+        if (ruleIds.isEmpty()) {
+            logger.debug("No rules found for categoryId: '{}'. Available categories: {}",
+                        categoryId, ruleIndex.getCategoryRuleMap().keySet());
+        }
+
+        return List.copyOf(ruleIds);
+    }
+
+    /**
      * Find rule IDs by payment method
-     * Source: ~/sequence-diagram/evaluate-promotion.puml line 43
+     * Source: ~/sequence-diagram/evaluate-promotion.puml line 44-45
      */
     public List<Long> findRuleIdsByPaymentMethod(String paymentMethod) {
         if (paymentMethod == null) {
@@ -102,7 +127,25 @@ public class RuleCache {
     }
 
     /**
-     * Clear the cache
+     * Find rule IDs by condition type
+     * Source: ~/sequence-diagram/evaluate-promotion.puml line 47-48
+     * Used to find all rules with specific condition types (e.g., TOTAL_BILL)
+     * Uses globalRuleMap index for fast lookup
+     */
+    public List<Long> findRuleIdsByCondition(ConditionType conditionType) {
+        if (conditionType == null) {
+            return List.of();
+        }
+
+        logger.debug("Finding rule IDs for condition type: {}", conditionType);
+
+        RuleIndex ruleIndex = getRuleIndex();
+        return List.copyOf(ruleIndex.getRulesByGlobal(conditionType.name()));
+    }
+
+
+    /**
+     * Clear all cache
      */
     public void clear() {
         logger.info("Clearing rule index cache and evaluate promotion rules");

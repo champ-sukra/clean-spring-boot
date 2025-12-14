@@ -1,8 +1,9 @@
 package com.demo.cleanspringboot.application.service;
 
 import com.demo.cleanspringboot.application.dto.request.EvaluatePromotionRequest;
+import com.demo.cleanspringboot.domain.model.ConditionType;
 import com.demo.cleanspringboot.domain.model.EvaluatePromotionRule;
-import com.demo.cleanspringboot.domain.service.PromotionRuleDomainService;
+import com.demo.cleanspringboot.domain.service.RuleEvaluationDomainService;
 import com.demo.cleanspringboot.infrastructure.cache.RuleCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 
 /**
  * Application Service for Promotion Evaluation
- * Source: ~/sequence-diagram/evaluate-promotion.puml
+ * Source: ~/sequence-diagram/evaluate-promotion.puml line 7
  * Participant: PromotionEvaluationService\n(application/service)
  */
 @Service
@@ -23,9 +24,9 @@ public class PromotionEvaluationService {
     private static final Logger logger = LoggerFactory.getLogger(PromotionEvaluationService.class);
 
     private final RuleCache ruleCache;
-    private final PromotionRuleDomainService domainService;
+    private final RuleEvaluationDomainService domainService;
 
-    public PromotionEvaluationService(RuleCache ruleCache, PromotionRuleDomainService domainService) {
+    public PromotionEvaluationService(RuleCache ruleCache, RuleEvaluationDomainService domainService) {
         this.ruleCache = ruleCache;
         this.domainService = domainService;
     }
@@ -37,38 +38,45 @@ public class PromotionEvaluationService {
     public List<Long> evaluatePromotionRules(EvaluatePromotionRequest request) {
         logger.info("Starting promotion evaluation for cartId: {}", request.getCartId());
 
-        // Step 1: Loop for each cart item - find rule IDs by SKU (line 40-42)
+        // Step 1: Loop for each cart item - find rule IDs by productId and categoryId (line 37-42)
         Set<Long> allRuleIds = new HashSet<>();
         for (EvaluatePromotionRequest.CartItem item : request.getItems()) {
-            List<Long> ruleIds = ruleCache.findRuleIdsBySku(item.getProductId());
-            allRuleIds.addAll(ruleIds);
-            logger.debug("Found {} rules for SKU: {}", ruleIds.size(), item.getProductId());
+            // Find by product ID (line 38-39)
+            List<Long> productRuleIds = ruleCache.findRuleIdsBySku(item.getProductId());
+            allRuleIds.addAll(productRuleIds);
+            logger.debug("Found {} rules for productId: {}", productRuleIds.size(), item.getProductId());
+
+            // Find by category ID (line 41-42)
+            if (item.getCategoryId() != null) {
+                List<Long> categoryRuleIds = ruleCache.findRuleIdsByCategoryId(item.getCategoryId());
+                allRuleIds.addAll(categoryRuleIds);
+                logger.debug("Found {} rules for categoryId: {}", categoryRuleIds.size(), item.getCategoryId());
+            }
         }
 
-        // Step 2: Find rule IDs by payment method (line 43-44) - skip if null
+        // Step 2: Find rule IDs by payment method (line 44-45) - skip if null
         if (request.getPaymentMethod() != null) {
             List<Long> paymentRuleIds = ruleCache.findRuleIdsByPaymentMethod(request.getPaymentMethod());
             allRuleIds.addAll(paymentRuleIds);
             logger.debug("Found {} rules for payment method: {}", paymentRuleIds.size(), request.getPaymentMethod());
         }
 
-        // Step 3: Filter rule IDs (line 46-50)
-        List<Long> filteredRuleIds = filterRuleIds(allRuleIds);
-        logger.info("Filtered to {} eligible rules", filteredRuleIds.size());
+        // Step 3: Find rule IDs by condition type TOTAL_BILL (line 47-48)
+        List<Long> totalBillRuleIds = ruleCache.findRuleIdsByCondition(ConditionType.TOTAL_BILL);
+        allRuleIds.addAll(totalBillRuleIds);
+        logger.debug("Found {} rules for TOTAL_BILL condition", totalBillRuleIds.size());
 
-        // Step 4: Get EvaluatePromotionRule for each filtered rule ID (line 51-54)
-        List<EvaluatePromotionRule> evaluateRules = new ArrayList<>();
-        for (Long ruleId : filteredRuleIds) {
-            EvaluatePromotionRule rule = ruleCache.getEvaluatePromotionRule(ruleId);
-            if (rule != null) {
-                evaluateRules.add(rule);
-            }
-        }
+        // Step 4: Arrange rule IDs (line 50-54)
+        List<Long> sortedRuleIds = arrangeRuleIds(allRuleIds);
+        logger.info("Arranged to {} sorted rules", sortedRuleIds.size());
 
-        // Step 5: Evaluate eligible rules via domain service (line 55-60)
-        List<EvaluatePromotionRule> eligibleRules = domainService.evaluateEligibleRules(request.getItems(), evaluateRules);
+        // Step 5: Evaluate eligible rules via domain service (line 56)
+        List<EvaluatePromotionRule> eligibleRules = domainService.evaluateEligibleRules(
+                request.getItems(),
+                sortedRuleIds,
+                request.getPaymentMethod());
 
-        // Step 6: Transform to result (line 66)
+        // Step 6: Transform to result (line 73)
         List<Long> eligibleRuleIds = transformToEvaluatePromotionRuleResult(eligibleRules);
 
         logger.info("Evaluation complete. {} eligible rules found", eligibleRuleIds.size());
@@ -86,12 +94,13 @@ public class PromotionEvaluationService {
     }
 
     /**
-     * Filter rule IDs
-     * Source: ~/sequence-diagram/evaluate-promotion.puml line 46-50
-     * - filter by current time (end)
+     * Arrange rule IDs
+     * Source: ~/sequence-diagram/evaluate-promotion.puml line 45-51
+     * - filter out by current time (end)
      * - deduplicate ruleIds
+     * - sort by priority ASC by rule.priority
      */
-    private List<Long> filterRuleIds(Set<Long> ruleIds) {
+    private List<Long> arrangeRuleIds(Set<Long> ruleIds) {
         LocalDateTime now = LocalDateTime.now();
 
         return ruleIds.stream()
@@ -101,8 +110,17 @@ public class PromotionEvaluationService {
                     if (rule == null) {
                         return false;
                     }
-                    // Filter by current time (must be before end date)
+                    // Filter out by current time (must be before end date)
                     return rule.getEndDate() == null || rule.getEndDate().isAfter(now);
+                })
+                .sorted((id1, id2) -> {
+                    // Sort by priority ASC (lower priority value = higher priority)
+                    EvaluatePromotionRule rule1 = ruleCache.getEvaluatePromotionRule(id1);
+                    EvaluatePromotionRule rule2 = ruleCache.getEvaluatePromotionRule(id2);
+                    if (rule1 == null || rule2 == null) {
+                        return 0;
+                    }
+                    return Integer.compare(rule1.getPriority(), rule2.getPriority());
                 })
                 .collect(Collectors.toList());
     }

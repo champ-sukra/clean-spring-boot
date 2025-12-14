@@ -6,10 +6,10 @@ title BuildRuleIndex on Application Startup\nAppStart → DB → In-Memory Cache
 actor "ApplicationStartup\n(Service Boot)" as AppStart
 participant "PromotionRuleController\n(infrastructure/adapter/in/web)" as Controller
 participant "PromotionRuleService\n(application/service)" as RuleService
-participant "PromotionRuleRepository\n(infrastructure/adapter/out/persistence)" as Repository
 participant "PromotionRuleIndexDomainService\n(domain/service)" as RuleIndexDomainService
 participant "PromotionRuleDomainService\n(domain/service)" as RuleDomainService
 participant "RuleCache (In-Memory)\n(infrastructure/cache)" as Cache
+participant "PromotionRuleRepository\n(infrastructure/adapter/out/persistence)" as Repository
 
 AppStart -> Controller: preparePromotionRuleData()
 activate Controller
@@ -33,22 +33,21 @@ activate RuleIndexDomainService
 
 RuleIndexDomainService -> RuleIndexDomainService: extractRuleIndex()
 note right of RuleIndexDomainService
+source: ~/epic.md -- **Sample Records → `promotion_condition`**
 Constructs in-memory maps:
-
 product:
   "P-1001" → [1,5]
   "P-1002" → [3]
-
 category:
   "C-2001" → [2,7]
-
 segment:
   FIRST_ORDER → [8]
   LOYALTY → [11]
-
 payment:
   VISA → [4]
   COD → [6]
+global:
+  "TOTAL_BILL" → [15, 20]
 end note
 
 RuleIndexDomainService --> RuleService: ruleIndex (HashMaps)
@@ -62,6 +61,7 @@ Store into local in-memory:
   ruleIndex.categoryRuleMap
   ruleIndex.segmentRuleMap
   ruleIndex.paymentRuleMap
+  ruleIndex.globalRuleMap
 
 Available for Evaluate() instantly
 end note
@@ -69,22 +69,23 @@ end note
 Cache --> RuleService
 deactivate Cache
 
-RuleService -> RuleDomainService: GetPromotionRulesDetails(activeRules, conditions, actions)
+RuleService -> RuleDomainService: buildEvaluateRules(activeRules, conditions, actions)
 activate RuleDomainService
 
 loop for each activeRule in activeRules
     RuleDomainService -> RuleDomainService: transformToEvaluateRule(activeRule, conditions, actions)
     note right of RuleDomainService
     source: ~/epic.md
-    - **Condition Examples**
     - **In-Memory Rule Detail Structure for Evaluation Engine**
+        - ConditionType including QUANTITY, AMOUNT, TOTAL_BILL, PRODUCT, CATEGORY,
+          PAYMENT_METHOD, CUSTOMER_SEGMENT, FIRST_ORDER, CHANNEL, BRAND, SHIPPING_METHOD
     end note
 end
 
-RuleService <-- RuleDomainService: Map<RuleId, EvaluatePromotionRule>
+RuleService <-- RuleDomainService: Map<ruleId, EvaluatePromotionRule>
 deactivate RuleDomainService
 
-RuleService -> Cache: saveEvaluatePromotionRules(evaluateRules)
+RuleService -> Cache: saveEvaluateRules(evaluateRules)
 activate Cache
 note right of Cache
    Store into local in-memory

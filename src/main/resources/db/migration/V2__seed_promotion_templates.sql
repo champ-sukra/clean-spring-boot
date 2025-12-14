@@ -4,7 +4,7 @@
 -- Date: 2025-11-16
 
 -- ============================================================
--- Insert Sample Promotion Templates
+-- Insert Sample Promotion Templates (Idempotent)
 -- ============================================================
 
 INSERT INTO promotion_templates (code, name, description, active) VALUES
@@ -46,5 +46,15 @@ INSERT INTO promotion_templates (code, name, description, active) VALUES
 ('TPL_LOYALTY_REWARD',
  'Loyalty Reward',
  'Rewards for loyal customers based on customer segment.',
- TRUE);
+ TRUE),
+
+('TPL_TOTAL_BILL_GET_FREE_ITEM',
+ 'Total Bill Get Free Item',
+ 'Get free item when total bill meets minimum amount threshold.',
+ TRUE)
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  description = VALUES(description),
+  active = VALUES(active),
+  updated_at = CURRENT_TIMESTAMP;
 

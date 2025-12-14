@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS promotion_rules (
 CREATE TABLE IF NOT EXISTS promotion_condition (
   id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   rule_id INT UNSIGNED NOT NULL COMMENT 'References promotion rule',
-  condition_type ENUM('QUANTITY','AMOUNT','CATEGORY','CUSTOMER_SEGMENT','CHANNEL','PAYMENT_METHOD') NOT NULL COMMENT 'Type of eligibility condition',
+  condition_type ENUM('QUANTITY','AMOUNT','TOTAL_BILL','CATEGORY','CUSTOMER_SEGMENT','CHANNEL','PAYMENT_METHOD') NOT NULL COMMENT 'Type of eligibility condition',
   threshold_value DECIMAL(10,2) DEFAULT 0 COMMENT 'Minimum quantity or amount required',
   include_product_ids JSON COMMENT 'SKUs or product groups that qualify',
   include_category_ids JSON COMMENT 'Category groups that qualify',

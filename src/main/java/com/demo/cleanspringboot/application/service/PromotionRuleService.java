@@ -94,12 +94,12 @@ public class PromotionRuleService {
         ruleCache.saveRuleIndex(ruleIndex);
         logger.info("Rule index saved to cache");
 
-        // Step 5: Get promotion rules details using PromotionRuleDomainService
+        // Step 5: Build evaluate rules using PromotionRuleDomainService (sequence diagram line 72)
         Map<Long, EvaluatePromotionRule> evaluateRules =
-                promotionRuleDomainService.getPromotionRulesDetails(activeRules, conditionsMap, actionsMap);
+                promotionRuleDomainService.buildEvaluateRules(activeRules, conditionsMap, actionsMap);
 
-        // Step 6: Save evaluate promotion rules to cache
-        ruleCache.saveEvaluatePromotionRules(evaluateRules);
+        // Step 6: Save evaluate rules to cache (sequence diagram line 85)
+        ruleCache.saveEvaluateRules(evaluateRules);
         logger.info("Evaluate promotion rules saved to cache");
 
         logger.info("Promotion rule data build completed successfully");
