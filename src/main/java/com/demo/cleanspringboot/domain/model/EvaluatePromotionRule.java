@@ -22,6 +22,7 @@ import java.util.List;
 public class EvaluatePromotionRule {
 
     private Long ruleId;
+    private String templateCode;
     private Integer priority;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
@@ -55,6 +56,14 @@ public class EvaluatePromotionRule {
 
     public void setRuleId(Long ruleId) {
         this.ruleId = ruleId;
+    }
+
+    public String getTemplateCode() {
+        return templateCode;
+    }
+
+    public void setTemplateCode(String templateCode) {
+        this.templateCode = templateCode;
     }
 
     public Integer getPriority() {

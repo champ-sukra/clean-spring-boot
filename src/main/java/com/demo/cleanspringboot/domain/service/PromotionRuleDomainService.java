@@ -89,6 +89,7 @@ public class PromotionRuleDomainService {
 
         EvaluatePromotionRule evaluateRule = new EvaluatePromotionRule();
         evaluateRule.setRuleId(rule.getId());
+        evaluateRule.setTemplateCode(rule.getTemplateCode());
         evaluateRule.setPriority(rule.getPriority());
         evaluateRule.setStartDate(rule.getStartDate());
         evaluateRule.setEndDate(rule.getEndDate());
@@ -121,7 +122,7 @@ public class PromotionRuleDomainService {
 
     /**
      * Transform PromotionConditionEntity to ConditionStore
-     * Source: ~/epic.md - Sample Records → promotion_condition
+     * Source: ~/epic.md -- **Sample Records → `promotion_condition`**
      * Handles all condition types: PRODUCT, QUANTITY, AMOUNT, CATEGORY, TOTAL_BILL,
      * PAYMENT_METHOD, CUSTOMER_SEGMENT, SHIPPING_METHOD, CHANNEL, BRAND
      */
@@ -132,7 +133,7 @@ public class PromotionRuleDomainService {
         ConditionType type = ConditionType.fromString(entity.getConditionType());
 
         // Parse threshold_value based on condition type
-        // Source: ~/epic.md -- Sample Records → promotion_condition
+        // Source: ~/epic.md -- **Sample Records → `promotion_condition`**
         // QUANTITY: threshold_value = 100 (direct number)
         // AMOUNT: threshold_value = 1000 (direct number)
         // TOTAL_BILL: threshold_value = 1000 (direct number)
@@ -152,15 +153,21 @@ public class PromotionRuleDomainService {
         }
 
         // Parse product codes - used by PRODUCT, QUANTITY, AMOUNT conditions
-        // Source: ~/epic.md - EvaluationCondition: productCodes for PRODUCT, QUANTITY, AMOUNT
+        // Source: ~/epic.md - EvaluationCondition: productCodes = List of sorted product-ids
         if (entity.getIncludeProductIds() != null) {
-            store.setProductCodes(parseJsonToStringList(entity.getIncludeProductIds()));
+            List<String> productCodes = parseJsonToStringList(entity.getIncludeProductIds());
+            // Sort productCodes as per epic.md specification
+            productCodes.sort(String::compareTo);
+            store.setProductCodes(productCodes);
         }
 
         // Parse category codes - used by CATEGORY, QUANTITY, AMOUNT conditions
-        // Source: ~/epic.md - EvaluationCondition: categoryCodes for CATEGORY, QUANTITY, AMOUNT
+        // Source: ~/epic.md - EvaluationCondition: categoryCodes = List of category-ids
         if (entity.getIncludeCategoryIds() != null) {
-            store.setCategoryCodes(parseJsonToStringList(entity.getIncludeCategoryIds()));
+            List<String> categoryCodes = parseJsonToStringList(entity.getIncludeCategoryIds());
+            // Sort categoryCodes for consistency
+            categoryCodes.sort(String::compareTo);
+            store.setCategoryCodes(categoryCodes);
         }
 
         // Set the condition type

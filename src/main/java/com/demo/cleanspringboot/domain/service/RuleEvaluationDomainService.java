@@ -62,8 +62,13 @@ public class RuleEvaluationDomainService {
             }
         }
 
-        logger.info("Evaluation completed. {} eligible rules found", eligibleRules.size());
-        return eligibleRules;
+        logger.info("Condition evaluation completed. {} eligible rules found before scope filtering", eligibleRules.size());
+
+        // Apply mutual exclusion by scope (line 59-71)
+        List<EvaluatePromotionRule> finalRules = deriveExclusiveByScope(eligibleRules);
+
+        logger.info("Evaluation completed. {} final rules after deriveExclusiveByScope", finalRules.size());
+        return finalRules;
     }
 
     /**
@@ -243,6 +248,99 @@ public class RuleEvaluationDomainService {
         boolean passed = totalBill >= requiredAmount;
         logger.debug("TOTAL_BILL check: required={}, actual={}, passed={}", requiredAmount, totalBill, passed);
         return passed;
+    }
+
+    /**
+     * Derive exclusive rules by scope
+     * Source: ~/sequence-diagram/evaluate-promotion.puml line 59-71
+     *
+     * 1) Derive scopeKey on-the-fly from rule.conditions:
+     *    - if any condition.type == TOTAL_BILL -> scopeKey = "ORDER"
+     *    - else if condition.productCodes not empty -> scopeKey = "PRODUCT:{sku}" for each sku
+     *    - else if condition.categoryCodes not empty -> scopeKey = "CATEGORY:{cat}" for each cat
+     *    - ignore PAYMENT_METHOD / CHANNEL / SEGMENT for scope (they are filters)
+     *
+     * 2) Group by (rule.templateCode + scopeKey)
+     *
+     * 3) In each group keep highest priority rule only
+     *    (this is default "mutual exclusion by scope", not stacking config)
+     */
+    private List<EvaluatePromotionRule> deriveExclusiveByScope(List<EvaluatePromotionRule> eligibleRules) {
+        logger.info("Applying deriveExclusiveByScope to {} rules", eligibleRules.size());
+
+        java.util.Map<String, EvaluatePromotionRule> scopeRuleMap = new java.util.HashMap<>();
+
+        for (EvaluatePromotionRule rule : eligibleRules) {
+            List<String> scopeKeys = deriveScopeKeys(rule);
+
+            for (String scopeKey : scopeKeys) {
+                String groupKey = rule.getTemplateCode() + ":" + scopeKey;
+
+                EvaluatePromotionRule existing = scopeRuleMap.get(groupKey);
+                if (existing == null || rule.getPriority() < existing.getPriority()) {
+                    // Keep rule with lower priority number (higher priority)
+                    scopeRuleMap.put(groupKey, rule);
+                    logger.debug("Scope group [{}]: Keeping rule {} (priority={})",
+                                groupKey, rule.getRuleId(), rule.getPriority());
+                } else {
+                    logger.debug("Scope group [{}]: Skipping rule {} (priority={}) - existing rule {} has higher priority ({})",
+                                groupKey, rule.getRuleId(), rule.getPriority(), existing.getRuleId(), existing.getPriority());
+                }
+            }
+        }
+
+        // Get unique rules (deduplicate by ruleId)
+        List<EvaluatePromotionRule> finalRules = scopeRuleMap.values().stream()
+                .distinct()
+                .toList();
+
+        logger.info("After deriveExclusiveByScope: {} unique rules remain", finalRules.size());
+        return finalRules;
+    }
+
+    /**
+     * Derive scope keys from rule conditions
+     */
+    private List<String> deriveScopeKeys(EvaluatePromotionRule rule) {
+        List<String> scopeKeys = new ArrayList<>();
+
+        // Check for TOTAL_BILL condition
+        boolean hasTotalBill = rule.getConditions().stream()
+                .anyMatch(c -> c.getType() == ConditionType.TOTAL_BILL);
+
+        if (hasTotalBill) {
+            scopeKeys.add("ORDER");
+            return scopeKeys;
+        }
+
+        // Check for product codes
+        for (ConditionStore condition : rule.getConditions()) {
+            if (condition.getProductCodes() != null && !condition.getProductCodes().isEmpty()) {
+                for (String productCode : condition.getProductCodes()) {
+                    scopeKeys.add("PRODUCT:" + productCode);
+                }
+            }
+        }
+
+        if (!scopeKeys.isEmpty()) {
+            return scopeKeys;
+        }
+
+        // Check for category codes
+        for (ConditionStore condition : rule.getConditions()) {
+            if (condition.getCategoryCodes() != null && !condition.getCategoryCodes().isEmpty()) {
+                for (String categoryCode : condition.getCategoryCodes()) {
+                    scopeKeys.add("CATEGORY:" + categoryCode);
+                }
+            }
+        }
+
+        // If no scope derived, use a default
+        if (scopeKeys.isEmpty()) {
+            scopeKeys.add("GLOBAL");
+        }
+
+        return scopeKeys;
     }
 }
 

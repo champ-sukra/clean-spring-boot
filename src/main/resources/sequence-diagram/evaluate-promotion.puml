@@ -11,41 +11,24 @@ participant "RuleCache\n(infrastructure/adapter/cache)" as Cache
 
 Client -> Controller
 activate Controller
-'Controller -> Controller: validateQueryParams
-'alt invalid parameters
-'    Client <-- Controller: 400
-'    note right of Client
-'    {
-'      "code": "invalid_request",
-'      "message": "Invalid status value"
-'    }
-'    end note
-'    deactivate Controller
-'end
-
-
-
-'RuleIndex -> RuleIndex: lookup SKU ruleIds\n( product_rule_map[sku] )
-'RuleIndex -> RuleIndex: lookup category ruleIds\n( category_rule_map[category] )
-'RuleIndex -> RuleIndex: lookup payment ruleIds\n( payment_rule_map[payment] )
-'RuleIndex -> RuleIndex: lookup segment ruleIds\n( segment_rule_map[segment] )
-
 
 Controller -> Service: evaluatePromotionRules(carts, paymentMethod)
 activate Service
 
 loop for each cart in carts
     Service -> Cache: findRuleIdsByProductId(cart.productId)
+    activate Cache
     Service <-- Cache: List<ruleIds>
 
     Service -> Cache: findRuleIdsByCategoryId(cart.categoryId)
-        Service <-- Cache: List<ruleIds>
+    Service <-- Cache: List<ruleIds>
 end
 Service -> Cache: findRuleIdsByPaymentMethod(paymentMethod)
 Service <-- Cache: List<ruleIds>
 
 Service -> Cache: findRuleIdsByCondition(ConditionType.TOTAL_BILL) // from globalRuleMap
 Service <-- Cache: List<ruleIds>
+deactivate Cache
 
 Service -> Service: arrangeRuleIds(mergedRuleIds)
 note right of Service
@@ -55,7 +38,7 @@ note right of Service
 end note
 
 Service -> DomainService: evaluateEligibleRules(carts, sortedRules, paymentMethod)
-
+activate DomainService
 loop for each ruleId in sortedRuleIds
     DomainService -> Cache: getEvaluatePromotionRule(ruleId)
     DomainService <-- Cache: EvaluatePromotionRule
@@ -70,8 +53,23 @@ loop for each ruleId in sortedRuleIds
     PAYMENT_METHOD: Check if payment method matches
     TOTAL_BILL Calculate total bill = sum of all(item.quantity * item.price) if total meets minimum threshold
     end note
-
 end
+
+DomainService -> DomainService: deriveExclusiveByScope(eligibleRules)
+note right of DomainService
+1) derive scopeKey on-the-fly from rule.conditions:
+   - if any condition.type == TOTAL_BILL -> scopeKey = "ORDER"
+   - else if condition.productCodes not empty -> scopeKey = "PRODUCT:{sku}" for each sku
+   - else if condition.categoryCodes not empty -> scopeKey = "CATEGORY:{cat}" for each cat
+   - ignore PAYMENT_METHOD / CHANNEL / SEGMENT for scope (they are filters)
+
+2) group by (rule.templateCode + scopeKey)
+
+3) in each group keep highest priority rule only
+   (this is default "mutual exclusion by scope", not stacking config)
+end note
+
+Service <-- DomainService: FinalAppliedRules
 
 'DomainService -> DomainService: filterByStacking(eligibleRules)
 'note right of DomainService
@@ -79,7 +77,7 @@ end
 'Filter out non-stackable combinations
 'end note
 Service <-- DomainService: List<EvaluatePromotionRule>
-
+deactivate DomainService
 
 Service -> Service: transformToEvaluatePromotionRuleResult(EvaluatePromotionRule)
 Service --> Controller: EvaluatePromotionRuleResult

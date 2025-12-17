@@ -1,8 +1,8 @@
 # Promotion-Engine Capabilities EPIC
 
 **Page ID:** 640155657  
-**Last Updated:** 2025-12-14  
-**Version:** 19
+**Last Updated:** 2025-12-17  
+**Version:** 23
 
 ## Objective
 To build a promotion engine that support multiple stackable, configurable promotion templates.
@@ -54,6 +54,7 @@ To build a promotion engine that support multiple stackable, configurable promot
 |-------|------|-------------|
 | `id` | INT UNSIGNED (PK) | Unique identifier of the rule |
 | `template_id` | INT UNSIGNED (FK → promotion_template.id) | References the template this rule belongs to |
+| `template_code` | VARCHAR(64) | References the template this rule belongs to |
 | `rule_name` | VARCHAR(255) | Business name of the promotion rule |
 | `start_date` | DATETIME | Rule effective start date |
 | `end_date` | DATETIME | Rule expiration date |
@@ -108,7 +109,7 @@ To build a promotion engine that support multiple stackable, configurable promot
 | `rule_id` | INT UNSIGNED (FK → promotion_rule.id) | References the rule this stacking config belongs to |
 | `stackable_with` | JSON | List of template codes or rules allowed to combine |
 | `exclusive_with` | JSON | List of templates / rules not allowed to combine |
-| `combinable` | BOOLEAN | Whether stacking is permitted |
+| `combinable` | BOOLEAN | Whether stacking is permitted (default = 0) |
 
 ### Table: `promotion_result_log`
 
@@ -158,8 +159,8 @@ To build a promotion engine that support multiple stackable, configurable promot
 | `type` | ENUM | Condition type (PRODUCT, QUANTITY, AMOUNT, CATEGORY, TOTAL_BILL, PAYMENT_METHOD, SHIPPING_METHOD, CHANNEL, BRAND) |
 | `buyQty` | INT | Required quantity to qualify (QUANTITY condition only) |
 | `minAmount` | DECIMAL | Required minimum spend (TOTAL_BILL, AMOUNT condition only) |
-| `productCodes` | List<String> | Eligible product codes (PRODUCT, QUANTITY, AMOUNT conditions) |
-| `categoryCodes` | List<String> | Eligible category codes (CATEGORY, QUANTITY, AMOUNT conditions) |
+| `productCodes` | List<String> | List of sorted product-ids (PRODUCT, QUANTITY, AMOUNT conditions) |
+| `categoryCodes` | List<String> | List of sorted category-ids (CATEGORY, QUANTITY, AMOUNT conditions) |
 | `paymentMethods` | List<String> | Required payment methods |
 | `segment` | String | Customer segment (e.g., FIRST_ORDER) |
 

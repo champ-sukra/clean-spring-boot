@@ -18,6 +18,9 @@ public class PromotionRuleEntity {
     @Column(name = "template_id", nullable = false)
     private Long templateId;
 
+    @Column(name = "template_code")
+    private String templateCode;
+
     @Column(name = "rule_name", nullable = false)
     private String ruleName;
 
@@ -59,6 +62,9 @@ public class PromotionRuleEntity {
 
     public Long getTemplateId() { return templateId; }
     public void setTemplateId(Long templateId) { this.templateId = templateId; }
+
+    public String getTemplateCode() { return templateCode; }
+    public void setTemplateCode(String templateCode) { this.templateCode = templateCode; }
 
     public String getRuleName() { return ruleName; }
     public void setRuleName(String ruleName) { this.ruleName = ruleName; }
