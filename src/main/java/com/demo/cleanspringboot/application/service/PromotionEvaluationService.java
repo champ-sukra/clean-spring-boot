@@ -36,9 +36,11 @@ public class PromotionEvaluationService {
      * Source: ~/sequence-diagram/evaluate-promotion.puml line 33
      */
     public List<Long> evaluatePromotionRules(EvaluatePromotionRequest request) {
+        long startTime = System.nanoTime();
         logger.info("Starting promotion evaluation for cartId: {}", request.getCartId());
 
         // Step 1: Loop for each cart item - find rule IDs by productId and categoryId (line 37-42)
+        long step1Start = System.nanoTime();
         Set<Long> allRuleIds = new HashSet<>();
         for (EvaluatePromotionRequest.CartItem item : request.getItems()) {
             // Find by product ID (line 38-39)
@@ -53,8 +55,10 @@ public class PromotionEvaluationService {
                 logger.debug("Found {} rules for categoryId: {}", categoryRuleIds.size(), item.getCategoryId());
             }
         }
+        long step1Time = (System.nanoTime() - step1Start) / 1_000_000;
 
         // Step 2: Find rule IDs by payment method (line 44-45) - skip if null
+        long step2Start = System.nanoTime();
         if (request.getPaymentMethod() != null) {
             List<Long> paymentRuleIds = ruleCache.findRuleIdsByPaymentMethod(request.getPaymentMethod());
             allRuleIds.addAll(paymentRuleIds);
@@ -65,21 +69,30 @@ public class PromotionEvaluationService {
         List<Long> totalBillRuleIds = ruleCache.findRuleIdsByCondition(ConditionType.TOTAL_BILL);
         allRuleIds.addAll(totalBillRuleIds);
         logger.debug("Found {} rules for TOTAL_BILL condition", totalBillRuleIds.size());
+        long step2Time = (System.nanoTime() - step2Start) / 1_000_000;
 
         // Step 4: Arrange rule IDs (line 50-54)
+        long step4Start = System.nanoTime();
         List<Long> sortedRuleIds = arrangeRuleIds(allRuleIds);
-        logger.info("Arranged to {} sorted rules", sortedRuleIds.size());
+        long step4Time = (System.nanoTime() - step4Start) / 1_000_000;
+        logger.info("Arranged to {} sorted rules in {}ms", sortedRuleIds.size(), step4Time);
 
         // Step 5: Evaluate eligible rules via domain service (line 56)
+        long step5Start = System.nanoTime();
         List<EvaluatePromotionRule> eligibleRules = domainService.evaluateEligibleRules(
                 request.getItems(),
                 sortedRuleIds,
                 request.getPaymentMethod());
+        long step5Time = (System.nanoTime() - step5Start) / 1_000_000;
 
         // Step 6: Transform to result (line 73)
+        long step6Start = System.nanoTime();
         List<Long> eligibleRuleIds = transformToEvaluatePromotionRuleResult(eligibleRules);
+        long step6Time = (System.nanoTime() - step6Start) / 1_000_000;
 
-        logger.info("Evaluation complete. {} eligible rules found", eligibleRuleIds.size());
+        long totalTime = (System.nanoTime() - startTime) / 1_000_000;
+        logger.info("Evaluation complete in {}ms. Breakdown: lookup={}ms, arrange={}ms, evaluate={}ms, transform={}ms. {} eligible rules found",
+                    totalTime, step1Time + step2Time, step4Time, step5Time, step6Time, eligibleRuleIds.size());
         return eligibleRuleIds;
     }
 

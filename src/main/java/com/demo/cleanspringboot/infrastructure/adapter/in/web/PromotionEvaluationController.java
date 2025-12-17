@@ -38,16 +38,23 @@ public class PromotionEvaluationController {
     public ResponseEntity<EvaluatePromotionResponse> evaluatePromotions(
             @RequestBody EvaluatePromotionRequest request) {
 
+        long controllerStart = System.nanoTime();
         logger.info("Received promotion evaluation request for cartId: {}", request.getCartId());
 
         // Call service to evaluate promotion rules (line 33)
+        long serviceStart = System.nanoTime();
         List<Long> eligibleRuleIds = promotionEvaluationService.evaluatePromotionRules(request);
+        long serviceTime = (System.nanoTime() - serviceStart) / 1_000_000;
 
         // Transform to response (line 61-62)
+        long responseStart = System.nanoTime();
         EvaluatePromotionResponse response = new EvaluatePromotionResponse();
         response.getData().setEligibleRuleIds(eligibleRuleIds);
+        long responseTime = (System.nanoTime() - responseStart) / 1_000_000;
 
-        logger.info("Returning {} eligible rules for cartId: {}", eligibleRuleIds.size(), request.getCartId());
+        long controllerTime = (System.nanoTime() - controllerStart) / 1_000_000;
+        logger.info("Controller completed in {}ms (service: {}ms, response: {}ms). Returning {} eligible rules for cartId: {}",
+                    controllerTime, serviceTime, responseTime, eligibleRuleIds.size(), request.getCartId());
 
         // Return 200 OK (line 64)
         return ResponseEntity.ok(response);

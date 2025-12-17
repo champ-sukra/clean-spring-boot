@@ -167,10 +167,22 @@ public class RuleEvaluationDomainService {
             return true;
         }
 
-        // Sum quantities from cart items matching product codes
+        // Sum quantities from cart items matching product codes OR categories
         int totalQty = carts.stream()
-                .filter(item -> condition.getProductCodes() != null &&
-                               condition.getProductCodes().contains(item.getProductId()))
+                .filter(item -> {
+                    // Match by product code
+                    boolean matchProduct = condition.getProductCodes() != null &&
+                                          condition.getProductCodes().contains(item.getProductId());
+
+                    // Match by category code
+                    boolean matchCategory = condition.getCategoryCodes() != null &&
+                                           item.getCategoryId() != null &&
+                                           condition.getCategoryCodes().contains(item.getCategoryId());
+
+                    // If both are specified, match either (OR logic)
+                    // If only one is specified, match that one
+                    return matchProduct || matchCategory;
+                })
                 .mapToInt(EvaluatePromotionRequest.CartItem::getQuantity)
                 .sum();
 
@@ -193,10 +205,22 @@ public class RuleEvaluationDomainService {
             return true;
         }
 
-        // Calculate total amount for matching products
+        // Calculate total amount for matching products OR categories
         double totalAmount = carts.stream()
-                .filter(item -> condition.getProductCodes() != null &&
-                               condition.getProductCodes().contains(item.getProductId()))
+                .filter(item -> {
+                    // Match by product code
+                    boolean matchProduct = condition.getProductCodes() != null &&
+                                          condition.getProductCodes().contains(item.getProductId());
+
+                    // Match by category code
+                    boolean matchCategory = condition.getCategoryCodes() != null &&
+                                           item.getCategoryId() != null &&
+                                           condition.getCategoryCodes().contains(item.getCategoryId());
+
+                    // If both are specified, match either (OR logic)
+                    // If only one is specified, match that one
+                    return matchProduct || matchCategory;
+                })
                 .mapToDouble(item -> item.getQuantity() * item.getPrice().doubleValue())
                 .sum();
 
