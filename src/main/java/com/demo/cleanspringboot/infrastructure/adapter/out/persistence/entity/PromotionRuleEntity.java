@@ -24,6 +24,9 @@ public class PromotionRuleEntity {
     @Column(name = "rule_name", nullable = false)
     private String ruleName;
 
+    @Column(name = "coupon_code")
+    private String couponCode;
+
     @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;
 
@@ -68,6 +71,9 @@ public class PromotionRuleEntity {
 
     public String getRuleName() { return ruleName; }
     public void setRuleName(String ruleName) { this.ruleName = ruleName; }
+
+    public String getCouponCode() { return couponCode; }
+    public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
 
     public LocalDateTime getStartDate() { return startDate; }
     public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }

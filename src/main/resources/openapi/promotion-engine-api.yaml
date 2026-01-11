@@ -215,9 +215,23 @@ paths:
                       eligible_rule_ids:
                         type: array
                         items:
-                          type: integer
-                          format: int64
-                        description: List of promotion rule IDs that the cart is eligible for
+                          type: object
+                          properties:
+                            rule_id:
+                              type: integer
+                              format: int64
+                              description: Promotion rule ID
+                            rule_name:
+                              type: string
+                              description: Business name of the promotion rule
+                            coupon_code:
+                              type: string
+                              nullable: true
+                              description: Coupon code if this is a coupon-based promotion
+                          required:
+                            - rule_id
+                            - rule_name
+                        description: List of eligible promotion rules with details
                       evaluated_at:
                         type: string
                         format: date-time
@@ -225,7 +239,13 @@ paths:
               example:
                 code: "success"
                 data:
-                  eligible_rule_ids: [10, 15, 23]
+                  eligible_rule_ids:
+                    - rule_id: 12345
+                      rule_name: "Buy 2 get 1 free"
+                      coupon_code: "asdasdasd"
+                    - rule_id: 12346
+                      rule_name: "Buy 3 get 2 free"
+                      coupon_code: "334234asd"
                   evaluated_at: "2025-11-26T10:30:00Z"
         '400':
           description: Invalid request

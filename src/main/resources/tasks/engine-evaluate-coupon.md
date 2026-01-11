@@ -40,6 +40,84 @@ Task: [API][SUCCESS] - Evaluate Eligible Promotions
       "category_id": "CAT-100",
       "quantity": 5,
       "price": 100.00
+    },
+    {
+      "product_id": "SKU-011",
+      "category_id": "CAT-100",
+      "quantity": 5,
+      "price": 150.00
+    },
+    {
+      "product_id": "SKU-012",
+      "category_id": "CAT-100",
+      "quantity": 5,
+      "price": 150.00
+    },
+    {
+      "product_id": "SKU-013",
+      "category_id": "CAT-100",
+      "quantity": 5,
+      "price": 150.00
+    },
+    {
+      "product_id": "SKU-014",
+      "category_id": "CAT-100",
+      "quantity": 5,
+      "price": 150.00
+    },
+    {
+      "product_id": "SKU-015",
+      "category_id": "CAT-100",
+      "quantity": 5,
+      "price": 150.00
+    },
+    {
+      "product_id": "SKU-016",
+      "category_id": "CAT-100",
+      "quantity": 5,
+      "price": 150.00
+    },
+    {
+      "product_id": "SKU-017",
+      "category_id": "CAT-100",
+      "quantity": 5,
+      "price": 150.00
+    },
+    {
+      "product_id": "SKU-018",
+      "category_id": "LACTASOY",
+      "quantity": 5,
+      "price": 150.00
+    },
+    {
+      "product_id": "SKU-019",
+      "category_id": "MILO",
+      "quantity": 10,
+      "price": 150.00
+    },
+    {
+      "product_id": "BESICO-1",
+      "category_id": "BJC-115",
+      "quantity": 4,
+      "price": 150.00
+    },
+    {
+      "product_id": "BESICO-2",
+      "category_id": "BJC-115",
+      "quantity": 4,
+      "price": 150.00
+    },
+    {
+      "product_id": "PROD001",
+      "category_id": "CAT-100",
+      "quantity": 5,
+      "price": 150.00
+    },
+    {
+      "product_id": "COKE-55555",
+      "category_id": "C-115",
+      "quantity": 3,
+      "price": 100.00
     }
   ],
   "payment_method": "CREDIT_CARD",
@@ -51,7 +129,15 @@ Task: [API][SUCCESS] - Evaluate Eligible Promotions
 {
   "code": "success",
   "data": {
-    "eligible_rule_ids": [10, 15, 23],
+    "eligible_rule_ids": [{
+      "rule_id": 12345,
+      "rule_name": "Buy 2 get 1 free",
+      "coupon_code": "asdasdasd"
+    }, {
+      "rule_id": 12346,
+      "rule_name": "Buy 3 get 2 free",
+      "coupon_code": "334234asd"
+    }],
     "evaluated_at": "2025-11-26T10:30:00Z"
   }
 }
@@ -67,9 +153,10 @@ Task: [API][SUCCESS] - Evaluate Eligible Promotions
   - Valid template reference (template_id exists and template is active)
   - Status = 2 (ACTIVE)
   - Current datetime within range (start_date ≤ now ≤ end_date)
+  - Valid promotion rule with using TPL_COUPON (coupon_code exists and coupon is active)
   - At least one condition defined in promotion_condition table
   - Available quota (quota not exhausted: quota_used < quota.limit)
 - Returns list of eligible rule IDs based on:
   - Active rules (status=2)
   - Rules within valid date range (start_date ≤ now ≤ end_date)
-  - Check if payment method matches
+  - Eligible rules if cart items, which match the rule's conditions both

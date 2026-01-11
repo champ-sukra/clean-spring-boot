@@ -26,11 +26,17 @@ Task: [API][SUCCESS] - Evaluate Eligible Promotions
     {
       "product_id": "SKU-001",
       "category_id": "CAT-100",
-      "quantity": 2,
+      "quantity": 6,
       "price": 100.00
     },
     {
       "product_id": "SKU-002",
+      "category_id": "CAT-100",
+      "quantity": 5,
+      "price": 400.00
+    },
+    {
+      "product_id": "SKU-004",
       "category_id": "CAT-100",
       "quantity": 5,
       "price": 100.00

@@ -1,4 +1,7 @@
 package com.demo.cleanspringboot.application.service;
+import com.demo.cleanspringboot.application.dto.request.EvaluatePromotionRequest;
+import com.demo.cleanspringboot.application.dto.response.EligibleRuleDetail;
+import com.demo.cleanspringboot.application.dto.response.EvaluatePromotionResponse;
 import com.demo.cleanspringboot.application.dto.response.PagedPromotionRuleResponse;
 import com.demo.cleanspringboot.application.dto.response.PromotionRuleResponse;
 import com.demo.cleanspringboot.application.dto.response.PromotionRuleSummaryResponse;
@@ -117,14 +120,15 @@ public class PromotionRuleService {
 
             // Deserialize multiple times to warm up JIT
             for (int i = 0; i < 3; i++) {
-                com.demo.cleanspringboot.application.dto.request.EvaluatePromotionRequest req =
-                    mapper.readValue(sampleRequest, com.demo.cleanspringboot.application.dto.request.EvaluatePromotionRequest.class);
+                EvaluatePromotionRequest req = mapper.readValue(sampleRequest, EvaluatePromotionRequest.class);
             }
 
             // Warm up EvaluatePromotionResponse serialization
-            com.demo.cleanspringboot.application.dto.response.EvaluatePromotionResponse resp =
-                new com.demo.cleanspringboot.application.dto.response.EvaluatePromotionResponse();
-            resp.getData().setEligibleRuleIds(java.util.List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L));
+            EvaluatePromotionResponse resp = new EvaluatePromotionResponse();
+            resp.getData().setEligibleRuleIds(java.util.List.of(
+                new EligibleRuleDetail(1L, "Warmup Rule 1", "COUPON1"),
+                new EligibleRuleDetail(2L, "Warmup Rule 2", "COUPON2")
+            ));
 
             // Serialize multiple times to warm up JIT
             for (int i = 0; i < 3; i++) {

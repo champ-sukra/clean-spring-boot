@@ -1,6 +1,7 @@
 package com.demo.cleanspringboot.infrastructure.adapter.in.web;
 
 import com.demo.cleanspringboot.application.dto.request.EvaluatePromotionRequest;
+import com.demo.cleanspringboot.application.dto.response.EligibleRuleDetail;
 import com.demo.cleanspringboot.application.dto.response.EvaluatePromotionResponse;
 import com.demo.cleanspringboot.application.service.PromotionEvaluationService;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class PromotionEvaluationController {
 
         // Call service to evaluate promotion rules (line 33)
         long serviceStart = System.nanoTime();
-        List<Long> eligibleRuleIds = promotionEvaluationService.evaluatePromotionRules(request);
+        List<EligibleRuleDetail> eligibleRuleIds = promotionEvaluationService.evaluatePromotionRules(request);
         long serviceTime = (System.nanoTime() - serviceStart) / 1_000_000;
 
         // Transform to response (line 61-62)

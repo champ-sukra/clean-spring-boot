@@ -75,10 +75,20 @@ activate RuleDomainService
 loop for each activeRule in activeRules
     RuleDomainService -> RuleDomainService: transformToEvaluateRule(activeRule, conditions, actions)
     note right of RuleDomainService
-    source: ~/epic.md
-    - **In-Memory Rule Detail Structure for Evaluation Engine**
-        - ConditionType including QUANTITY, AMOUNT, TOTAL_BILL, PRODUCT, CATEGORY,
-          PAYMENT_METHOD, CUSTOMER_SEGMENT, FIRST_ORDER, CHANNEL, BRAND, SHIPPING_METHOD
+    source: ~/epic.md -- **In-Memory Rule Detail Structure for Evaluation Engine**
+
+    EvaluatePromotionRule stored in-memory:
+    - ruleId, templateCode, couponCode, priority
+    - startDate, endDate
+    - conditions (List<ConditionStore>):
+      * type: PRODUCT, QUANTITY, AMOUNT, CATEGORY, TOTAL_BILL,
+             PAYMENT_METHOD, CUSTOMER_SEGMENT, CHANNEL, BRAND, SHIPPING_METHOD
+      * buyQty, minAmount
+      * productCodes (sorted), categoryCodes (sorted)
+      * paymentMethods, segment, shippingMethods, channels, brands
+    - actions (List<ActionStore>):
+      * type, discountPercent, fixedPrice, rewardProductCodes, rewardQty
+    - quota, quotaUsed, stacking
     end note
 end
 
@@ -88,7 +98,16 @@ deactivate RuleDomainService
 RuleService -> Cache: saveEvaluateRules(evaluateRules)
 activate Cache
 note right of Cache
-   Store into local in-memory
+Store into local in-memory:
+  Map<ruleId, EvaluatePromotionRule>
+
+Each EvaluatePromotionRule contains:
+- Rule metadata (id, templateCode, couponCode, priority, dates)
+- Conditions with sorted product/category codes
+- Actions with discount/reward details
+- Quota and stacking configuration
+
+Available for fast lookup during evaluate()
 end note
 
 RuleService <-- Cache

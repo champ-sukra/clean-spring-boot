@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * Response DTO for promotion evaluation
- * Source: ~/tasks/engine-evaluate.md
+ * Source: ~/tasks/engine-evaluate-coupon.md
  */
 public class EvaluatePromotionResponse {
 
@@ -15,13 +15,13 @@ public class EvaluatePromotionResponse {
 
     public static class EvaluationData {
         @JsonProperty("eligible_rule_ids")
-        private List<Long> eligibleRuleIds;
+        private List<EligibleRuleDetail> eligibleRuleIds;
 
         @JsonProperty("evaluated_at")
         private LocalDateTime evaluatedAt;
 
-        public List<Long> getEligibleRuleIds() { return eligibleRuleIds; }
-        public void setEligibleRuleIds(List<Long> eligibleRuleIds) { this.eligibleRuleIds = eligibleRuleIds; }
+        public List<EligibleRuleDetail> getEligibleRuleIds() { return eligibleRuleIds; }
+        public void setEligibleRuleIds(List<EligibleRuleDetail> eligibleRuleIds) { this.eligibleRuleIds = eligibleRuleIds; }
 
         public LocalDateTime getEvaluatedAt() { return evaluatedAt; }
         public void setEvaluatedAt(LocalDateTime evaluatedAt) { this.evaluatedAt = evaluatedAt; }

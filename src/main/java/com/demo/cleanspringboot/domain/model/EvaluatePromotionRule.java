@@ -10,6 +10,8 @@ import java.util.List;
  *
  * EvaluateRule structure:
  * - ruleId: INT - Unique rule identifier
+ * - templateCode: STRING - Template code reference
+ * - couponCode: STRING - Coupon Code (MVP)
  * - priority: INT - Rule priority (lower = higher priority)
  * - startDate: DATETIME - Rule active start
  * - endDate: DATETIME - Rule active end
@@ -22,7 +24,9 @@ import java.util.List;
 public class EvaluatePromotionRule {
 
     private Long ruleId;
+    private String ruleName;
     private String templateCode;
+    private String couponCode;
     private Integer priority;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
@@ -58,12 +62,28 @@ public class EvaluatePromotionRule {
         this.ruleId = ruleId;
     }
 
+    public String getRuleName() {
+        return ruleName;
+    }
+
+    public void setRuleName(String ruleName) {
+        this.ruleName = ruleName;
+    }
+
     public String getTemplateCode() {
         return templateCode;
     }
 
     public void setTemplateCode(String templateCode) {
         this.templateCode = templateCode;
+    }
+
+    public String getCouponCode() {
+        return couponCode;
+    }
+
+    public void setCouponCode(String couponCode) {
+        this.couponCode = couponCode;
     }
 
     public Integer getPriority() {

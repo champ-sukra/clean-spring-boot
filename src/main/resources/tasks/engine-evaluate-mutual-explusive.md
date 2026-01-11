@@ -26,17 +26,29 @@ Task: EvaluatePromotionRuleDetail POST /api/v1/promotion-rules/evaluate
     {
       "product_id": "SKU-001",
       "category_id": "CAT-100",
-      "quantity": 2,
+      "quantity": 1,
       "price": 100.00
     },
     {
       "product_id": "SKU-002",
       "category_id": "CAT-100",
-      "quantity": 5,
+      "quantity": 2,
+      "price": 400.00
+    },
+    {
+      "product_id": "SKU-004",
+      "category_id": "CAT-100",
+      "quantity": 1,
       "price": 100.00
+    },
+    {
+      "product_id": "SKU-011",
+      "category_id": "CAT-100",
+      "quantity": 1,
+      "price": 150.00
     }
   ],
-  "payment_method": null,
+  "payment_method": "CREDIT_CARD",
   "shipping_method": null
 }
 ```

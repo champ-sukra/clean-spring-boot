@@ -89,7 +89,9 @@ public class PromotionRuleDomainService {
 
         EvaluatePromotionRule evaluateRule = new EvaluatePromotionRule();
         evaluateRule.setRuleId(rule.getId());
+        evaluateRule.setRuleName(rule.getRuleName());
         evaluateRule.setTemplateCode(rule.getTemplateCode());
+        evaluateRule.setCouponCode(rule.getCouponCode());
         evaluateRule.setPriority(rule.getPriority());
         evaluateRule.setStartDate(rule.getStartDate());
         evaluateRule.setEndDate(rule.getEndDate());

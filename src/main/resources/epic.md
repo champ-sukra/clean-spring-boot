@@ -1,8 +1,8 @@
 # Promotion-Engine Capabilities EPIC
 
 **Page ID:** 640155657  
-**Last Updated:** 2025-12-17  
-**Version:** 23
+**Last Updated:** 2025-12-18  
+**Version:** 24
 
 ## Objective
 To build a promotion engine that support multiple stackable, configurable promotion templates.
@@ -56,6 +56,7 @@ To build a promotion engine that support multiple stackable, configurable promot
 | `template_id` | INT UNSIGNED (FK → promotion_template.id) | References the template this rule belongs to |
 | `template_code` | VARCHAR(64) | References the template this rule belongs to |
 | `rule_name` | VARCHAR(255) | Business name of the promotion rule |
+| `coupon_code` | VARCHAR(64) | References the coupon campaign |
 | `start_date` | DATETIME | Rule effective start date |
 | `end_date` | DATETIME | Rule expiration date |
 | `status` | VARCHAR(32) | PENDING, ACTIVE, EXPIRED |
@@ -146,6 +147,7 @@ To build a promotion engine that support multiple stackable, configurable promot
 | `priority` | INT | Rule priority (lower = higher priority) |
 | `startDate` | DATETIME | Rule active start |
 | `endDate` | DATETIME | Rule active end |
+| `coupon_code` | STRING | Coupon Code (MVP) |
 | `conditions` | List<EvaluationCondition> | List of eligibility conditions |
 | `actions` | List<EvaluateAction> | List of reward actions |
 | `quota` | QuotaDefinition | Quota limits for rule usage |

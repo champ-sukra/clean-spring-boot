@@ -1,6 +1,7 @@
 package com.demo.cleanspringboot.application.service;
 
 import com.demo.cleanspringboot.application.dto.request.EvaluatePromotionRequest;
+import com.demo.cleanspringboot.application.dto.response.EligibleRuleDetail;
 import com.demo.cleanspringboot.domain.model.ConditionType;
 import com.demo.cleanspringboot.domain.model.EvaluatePromotionRule;
 import com.demo.cleanspringboot.domain.service.RuleEvaluationDomainService;
@@ -34,8 +35,10 @@ public class PromotionEvaluationService {
     /**
      * Evaluate promotion rules for cart items
      * Source: ~/sequence-diagram/evaluate-promotion.puml line 33
+     * Source: ~/tasks/engine-evaluate-coupon.md
+     * Returns list of EligibleRuleDetail with rule_id, rule_name, and coupon_code
      */
-    public List<Long> evaluatePromotionRules(EvaluatePromotionRequest request) {
+    public List<EligibleRuleDetail> evaluatePromotionRules(EvaluatePromotionRequest request) {
         long startTime = System.nanoTime();
         logger.info("Starting promotion evaluation for cartId: {}", request.getCartId());
 
@@ -87,22 +90,33 @@ public class PromotionEvaluationService {
 
         // Step 6: Transform to result (line 73)
         long step6Start = System.nanoTime();
-        List<Long> eligibleRuleIds = transformToEvaluatePromotionRuleResult(eligibleRules);
+        List<EligibleRuleDetail> eligibleRuleDetails = transformToEvaluatePromotionRuleResult(eligibleRules);
         long step6Time = (System.nanoTime() - step6Start) / 1_000_000;
 
         long totalTime = (System.nanoTime() - startTime) / 1_000_000;
         logger.info("Evaluation complete in {}ms. Breakdown: lookup={}ms, arrange={}ms, evaluate={}ms, transform={}ms. {} eligible rules found",
-                    totalTime, step1Time + step2Time, step4Time, step5Time, step6Time, eligibleRuleIds.size());
-        return eligibleRuleIds;
+                    totalTime, step1Time + step2Time, step4Time, step5Time, step6Time, eligibleRuleDetails.size());
+
+        logger.debug("Eligible rules: {}", eligibleRuleDetails.stream()
+                .map(r -> String.format("[id=%d, name=%s, coupon=%s]", r.getRuleId(), r.getRuleName(), r.getCouponCode()))
+                .collect(Collectors.joining(", ")));
+
+        return eligibleRuleDetails;
     }
 
     /**
      * Transform to EvaluatePromotionRuleResult
      * Source: ~/sequence-diagram/evaluate-promotion.puml line 66
+     * Source: ~/tasks/engine-evaluate-coupon.md
+     * Returns list of EligibleRuleDetail with rule_id, rule_name, and coupon_code
      */
-    private List<Long> transformToEvaluatePromotionRuleResult(List<EvaluatePromotionRule> eligibleRules) {
+    private List<EligibleRuleDetail> transformToEvaluatePromotionRuleResult(List<EvaluatePromotionRule> eligibleRules) {
         return eligibleRules.stream()
-                .map(EvaluatePromotionRule::getRuleId)
+                .map(rule -> new EligibleRuleDetail(
+                        rule.getRuleId(),
+                        rule.getRuleName(),
+                        rule.getCouponCode()
+                ))
                 .collect(Collectors.toList());
     }
 
